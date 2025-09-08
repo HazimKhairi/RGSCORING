@@ -795,7 +795,7 @@ if (isset($_GET['edit'])) {
                                       placeholder="Optional description about the event, rules, or special notes..."><?php echo $edit_event ? htmlspecialchars($edit_event['description'] ?? '') : ''; ?></textarea>
                         </div>
 
-                        <div class="form-actions">
+                        <div class="form-actions" style="margin-top: 15px;">
                             <button type="submit" name="<?php echo $edit_event ? 'update_event' : 'create_event'; ?>" class="btn btn-primary">
                                 <?php echo $edit_event ? '💾 Update Event' : '🏆 Create Event'; ?>
                             </button>
