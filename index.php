@@ -9,29 +9,75 @@ if (isLoggedIn()) {
     exit();
 }
 
-// Get recent active events for display
+// Get live events and organization leaderboards
 $database = new Database();
 $conn = $database->getConnection();
 
-$recent_events = [];
+$live_events = [];
 try {
-    $events_query = "SELECT event_name, event_date, location, status FROM events 
-                     WHERE status IN ('active', 'upcoming') 
-                     ORDER BY event_date ASC LIMIT 3";
+    // Get active events with organization participation
+    $events_query = "SELECT DISTINCT e.event_id, e.event_name, e.event_date, e.location, e.status,
+                            COUNT(DISTINCT o.org_id) as org_count,
+                            COUNT(DISTINCT g.gymnast_id) as total_participants,
+                            COUNT(DISTINCT s.score_id) as total_scores
+                     FROM events e
+                     LEFT JOIN scores s ON e.event_id = s.event_id
+                     LEFT JOIN gymnasts g ON s.gymnast_id = g.gymnast_id
+                     LEFT JOIN teams t ON g.team_id = t.team_id
+                     LEFT JOIN organizations o ON t.organization_id = o.org_id
+                     WHERE e.status IN ('active', 'upcoming')
+                     GROUP BY e.event_id
+                     ORDER BY 
+                        CASE WHEN e.status = 'active' THEN 1 ELSE 2 END,
+                        e.event_date DESC
+                     LIMIT 6";
+    
     $events_stmt = $conn->prepare($events_query);
     $events_stmt->execute();
-    $recent_events = $events_stmt->fetchAll(PDO::FETCH_ASSOC);
+    $events_data = $events_stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // For each event, get top organizations
+    foreach ($events_data as $event) {
+        $event_id = $event['event_id'];
+        
+        // Get organization leaderboard for this event
+        $org_query = "SELECT o.org_name,
+                             COUNT(DISTINCT g.gymnast_id) as participants,
+                             COUNT(s.score_id) as total_scores,
+                             AVG(CASE WHEN s.score_id IS NOT NULL THEN 
+                                 (s.score_d1 + s.score_d2 + s.score_d3 + s.score_d4 + 
+                                  (s.score_a1 + s.score_a2 + s.score_a3)/3 + 
+                                  (s.score_e1 + s.score_e2 + s.score_e3)/3 - 
+                                  s.technical_deduction) END) as avg_score
+                      FROM organizations o
+                      JOIN teams t ON o.org_id = t.organization_id
+                      JOIN gymnasts g ON t.team_id = g.team_id
+                      LEFT JOIN scores s ON g.gymnast_id = s.gymnast_id AND s.event_id = :event_id
+                      WHERE EXISTS (SELECT 1 FROM scores s2 WHERE s2.gymnast_id = g.gymnast_id AND s2.event_id = :event_id)
+                      GROUP BY o.org_id, o.org_name
+                      HAVING total_scores > 0
+                      ORDER BY avg_score DESC, total_scores DESC
+                      LIMIT 3";
+        
+        $org_stmt = $conn->prepare($org_query);
+        $org_stmt->bindParam(':event_id', $event_id);
+        $org_stmt->execute();
+        $event['organizations'] = $org_stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        $live_events[] = $event;
+    }
 } catch (PDOException $e) {
     // Database not set up yet
 }
 
-// Get total system stats if database is available
-$stats = ['users' => 0, 'events' => 0, 'scores' => 0];
+// Get total system stats
+$stats = ['total_events' => 0, 'total_orgs' => 0, 'total_athletes' => 0, 'total_scores' => 0];
 try {
     $stats_query = "SELECT 
-                        (SELECT COUNT(*) FROM users WHERE is_active = 1) as users,
-                        (SELECT COUNT(*) FROM events) as events,
-                        (SELECT COUNT(*) FROM scores) as scores";
+                        (SELECT COUNT(*) FROM events WHERE status = 'active') as total_events,
+                        (SELECT COUNT(*) FROM organizations) as total_orgs,
+                        (SELECT COUNT(*) FROM gymnasts) as total_athletes,
+                        (SELECT COUNT(*) FROM scores) as total_scores";
     $stats_stmt = $conn->prepare($stats_query);
     $stats_stmt->execute();
     $stats = $stats_stmt->fetch(PDO::FETCH_ASSOC);
@@ -44,7 +90,8 @@ try {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gymnastics Scoring System</title>
+    <title>Rhythmic Gymnastics Scoring System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -53,335 +100,406 @@ try {
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            color: #333;
-            line-height: 1.6;
+            font-family: 'Poppins', sans-serif;
+            background: #1A1B23;
+            color: white;
+            min-height: 100vh;
         }
 
         .header {
-            background: #2c3e50;
-            color: white;
+            background: #1A1B23;
             padding: 1rem 0;
+            border-bottom: 1px solid #2D2E3F;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .header-content {
-            max-width: 1200px;
+            max-width: 1400px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 1rem;
+            padding: 0 2rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            font-size: 1.5rem;
-            font-weight: bold;
+            gap: 1rem;
         }
 
         .logo-icon {
-            width: 40px;
-            height: 40px;
-            background: #3498db;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
+        }
+
+        .header-nav {
+            display: flex;
+            gap: 2rem;
+            align-items: center;
+        }
+
+        .nav-item {
+            color: #A3A3A3;
+            text-decoration: none;
+            font-weight: 500;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-item:hover,
+        .nav-item.active {
+            color: white;
+            background: #2D2E3F;
+        }
+
+        .login-btn {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .page-subtitle {
+            color: #A3A3A3;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-banner {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            padding: 2rem;
+            border-radius: 16px;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .welcome-banner h2 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .welcome-banner p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: white;
+        }
+
+        .tournaments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .tournament-card {
+            background: #2D2E3F;
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+            border: 1px solid #3D3E4F;
+        }
+
+        .tournament-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+            border-color: #8B5CF6;
+        }
+
+        .tournament-image {
+            width: 100%;
+            height: 200px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 3rem;
+        }
+
+        .tournament-content {
+            padding: 1.5rem;
+        }
+
+        .tournament-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .status-active {
+            background: #10B981;
+            color: white;
+        }
+
+        .status-upcoming {
+            background: #F59E0B;
+            color: white;
+        }
+
+        .tournament-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: white;
+        }
+
+        .tournament-prize {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #8B5CF6;
+            margin-bottom: 0.5rem;
+        }
+
+        .tournament-meta {
+            color: #A3A3A3;
+            font-size: 0.9rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .leaderboard {
+            margin-bottom: 1.5rem;
+        }
+
+        .leaderboard-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #3D3E4F;
+        }
+
+        .leaderboard-item:last-child {
+            border-bottom: none;
+        }
+
+        .org-rank {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .rank-number {
+            width: 24px;
+            height: 24px;
+            background: #3D3E4F;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-right: 10px;
-            font-size: 1.2rem;
+            font-size: 0.8rem;
+            font-weight: 600;
         }
 
-        .nav-links {
+        .rank-1 { background: #F59E0B; }
+        .rank-2 { background: #6B7280; }
+        .rank-3 { background: #CD7C2F; }
+
+        .org-name {
+            font-weight: 500;
+            color: white;
+        }
+
+        .org-score {
+            color: #8B5CF6;
+            font-weight: 600;
+        }
+
+        .tournament-footer {
             display: flex;
-            gap: 1rem;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #3D3E4F;
         }
 
-        .btn {
-            padding: 0.8rem 1.5rem;
+        .tournament-stats {
+            display: flex;
+            gap: 2rem;
+            font-size: 0.85rem;
+            color: #A3A3A3;
+        }
+
+        .view-btn {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
             border-radius: 8px;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            display: inline-block;
-            text-align: center;
             transition: all 0.3s ease;
             font-size: 0.9rem;
         }
 
-        .btn-primary {
-            background: #3498db;
-            color: white;
-        }
-
-        .btn-success {
-            background: #27ae60;
-            color: white;
-        }
-
-        .btn-outline {
-            background: transparent;
-            color: white;
-            border: 2px solid white;
-        }
-
-        .btn:hover {
+        .view-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-        }
-
-        .hero {
-            background: #34495e;
-            color: white;
-            padding: 4rem 0;
-            text-align: center;
-        }
-
-        .hero-content {
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .hero h1 {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            font-weight: 700;
-        }
-
-        .hero p {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            opacity: 0.9;
-        }
-
-        .hero-buttons {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 0 1rem;
-        }
-
-        .section {
-            padding: 4rem 0;
-        }
-
-        .section-header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
-
-        .section-header h2 {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-        }
-
-        .section-header p {
-            font-size: 1.1rem;
-            color: #7f8c8d;
-            max-width: 600px;
-            margin: 0 auto;
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
-
-        .feature-card {
-            background: white;
-            padding: 2rem;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            text-align: center;
-            transition: transform 0.3s ease;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-        }
-
-        .feature-icon {
-            width: 80px;
-            height: 80px;
-            background: #3498db;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: 0 auto 1rem;
-            font-size: 2rem;
-            color: white;
-        }
-
-        .feature-card h3 {
-            font-size: 1.3rem;
-            margin-bottom: 1rem;
-            color: #2c3e50;
-        }
-
-        .feature-card p {
-            color: #7f8c8d;
-            line-height: 1.6;
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
 
         .stats-section {
-            background: #3498db;
-            color: white;
+            background: #2D2E3F;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
         }
 
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 2rem;
-            text-align: center;
         }
 
         .stat-item {
-            padding: 1rem;
+            text-align: center;
         }
 
         .stat-number {
-            font-size: 3rem;
-            font-weight: bold;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #8B5CF6;
             margin-bottom: 0.5rem;
         }
 
         .stat-label {
-            font-size: 1.1rem;
-            opacity: 0.9;
-        }
-
-        .events-section {
-            background: white;
-        }
-
-        .events-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 1.5rem;
-        }
-
-        .event-card {
-            border: 2px solid #e1e8ed;
-            border-radius: 15px;
-            padding: 1.5rem;
-            transition: all 0.3s ease;
-        }
-
-        .event-card:hover {
-            border-color: #3498db;
-            box-shadow: 0 5px 15px rgba(52, 152, 219, 0.1);
-        }
-
-        .event-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            margin-bottom: 1rem;
-        }
-
-        .event-title {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #2c3e50;
-        }
-
-        .event-status {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
+            color: #A3A3A3;
+            font-size: 0.9rem;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .status-active { background: #27ae60; color: white; }
-        .status-upcoming { background: #f39c12; color: white; }
+        .no-events {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #A3A3A3;
+        }
 
-        .event-details {
-            color: #7f8c8d;
-            margin-bottom: 0.5rem;
+        .no-events h3 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: white;
         }
 
         .footer {
-            background: #2c3e50;
-            color: white;
+            background: #1A1B23;
+            border-top: 1px solid #2D2E3F;
             padding: 2rem 0;
             text-align: center;
+            margin-top: 3rem;
         }
 
         .footer p {
-            opacity: 0.8;
+            color: #A3A3A3;
+            font-size: 0.9rem;
         }
 
+        .footer a {
+            color: #8B5CF6;
+            text-decoration: none;
+            font-weight: 600;
+        }
+
+        .footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
         @media (max-width: 768px) {
-            .hero h1 {
+            .header-content {
+                padding: 0 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .header-nav {
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .tournaments-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .page-title {
                 font-size: 2rem;
             }
             
-            .hero p {
-                font-size: 1rem;
-            }
-            
-            .hero-buttons {
-                flex-direction: column;
-                align-items: center;
-            }
-            
-            .nav-links {
-                gap: 0.5rem;
-            }
-            
-            .btn {
-                padding: 0.6rem 1rem;
-                font-size: 0.8rem;
-            }
-            
-            .features-grid {
-                grid-template-columns: 1fr;
+            .welcome-banner h2 {
+                font-size: 1.5rem;
             }
             
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
-            
-            .events-grid {
-                grid-template-columns: 1fr;
-            }
         }
 
-        .live-indicator {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            background: #e74c3c;
-            color: white;
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
+        /* Live indicator animation */
         .live-dot {
             width: 8px;
             height: 8px;
-            background: white;
+            background: #10B981;
             border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
             animation: pulse 2s infinite;
         }
 
@@ -396,119 +514,152 @@ try {
         <div class="header-content">
             <div class="logo">
                 <div class="logo-icon">🤸</div>
-                Gymnastics Scoring System
+                <div class="logo-text">GymnasticsScore</div>
             </div>
-            <div class="nav-links">
-                <a href="leaderboard.php" class="btn btn-outline">Live Scores</a>
-                <a href="login.php" class="btn btn-primary">Login</a>
-            </div>
+            <nav class="header-nav">
+                <a href="#" class="nav-item active">Competitions</a>
+                <a href="leaderboard.php" class="nav-item">Live Scores</a>
+                <a href="login.php" class="login-btn">Login</a>
+            </nav>
         </div>
     </header>
 
-    <section class="hero">
-        <div class="hero-content">
-            <h1>Professional Gymnastics Scoring</h1>
-            <p>Complete competition management system with real-time scoring, live leaderboards, and comprehensive event administration.</p>
-            <div class="hero-buttons">
-                <a href="leaderboard.php" class="btn btn-success">
-                    <span class="live-indicator">
-                        <span class="live-dot"></span>
-                        View Live Scores
-                    </span>
-                </a>
-                <a href="login.php" class="btn btn-primary">Access System</a>
-            </div>
+    <div class="container">
+        <div class="welcome-banner">
+            <h2>Welcome to Rhythmic Gymnastics Scoring System</h2>
+            <p>Experience professional gymnastics competitions with real-time scoring and live leaderboards</p>
         </div>
-    </section>
 
-    <section class="section">
-        <div class="container">
-            <div class="section-header">
-                <h2>System Features</h2>
-                <p>Everything you need to manage gymnastics competitions professionally</p>
-            </div>
-            
-            <div class="features-grid">
-                <div class="feature-card">
-                    <div class="feature-icon">🏆</div>
-                    <h3>Live Scoring</h3>
-                    <p>Real-time score entry with automatic calculations following official gymnastics scoring methods.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📊</div>
-                    <h3>Dynamic Leaderboards</h3>
-                    <p>Auto-refreshing leaderboards that update instantly as judges enter scores during competitions.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">👥</div>
-                    <h3>Multi-Role Access</h3>
-                    <p>Separate interfaces for super admins, event admins, judges, and spectators with appropriate permissions.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">📱</div>
-                    <h3>Mobile Responsive</h3>
-                    <p>Optimized for all devices with mobile-first design prioritizing athlete names and scores.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🎯</div>
-                    <h3>Event Management</h3>
-                    <p>Complete tournament administration including athlete registration, judge assignments, and scheduling.</p>
-                </div>
-                
-                <div class="feature-card">
-                    <div class="feature-icon">🔒</div>
-                    <h3>Secure & Reliable</h3>
-                    <p>Role-based security, data backup, and reliable hosting compatible with free hosting providers.</p>
-                </div>
-            </div>
+        <div class="page-header">
+            <h1 class="page-title">Live Competitions</h1>
+            <p class="page-subtitle">Follow active tournaments and organization rankings in real-time</p>
         </div>
-    </section>
 
-    <?php if (!empty($recent_events)): ?>
-    <section class="section events-section">
-        <div class="container">
-            <div class="section-header">
-                <h2>Upcoming Events</h2>
-                <p>Current and upcoming gymnastics competitions</p>
-            </div>
-            
-            <div class="events-grid">
-                <?php foreach ($recent_events as $event): ?>
-                <div class="event-card">
-                    <div class="event-header">
-                        <div class="event-title"><?php echo htmlspecialchars($event['event_name']); ?></div>
-                        <div class="event-status status-<?php echo $event['status']; ?>">
-                            <?php echo ucfirst($event['status']); ?>
+        <!-- Live Events -->
+        <?php if (!empty($live_events)): ?>
+        <div class="section-title">Active Competitions</div>
+        
+        <div class="tournaments-grid">
+            <?php foreach ($live_events as $event): ?>
+            <div class="tournament-card">
+                <div class="tournament-image">
+                    🏆
+                </div>
+                
+                <div class="tournament-content">
+                    <div class="tournament-status status-<?php echo $event['status']; ?>">
+                        <?php if ($event['status'] === 'active'): ?>
+                            <span class="live-dot"></span>LIVE
+                        <?php else: ?>
+                            UPCOMING
+                        <?php endif; ?>
+                    </div>
+                    
+                    <h3 class="tournament-title"><?php echo htmlspecialchars($event['event_name']); ?></h3>
+                    
+                    <div class="tournament-prize">
+                        <?php echo $event['total_participants']; ?> Athletes
+                    </div>
+                    
+                    <div class="tournament-meta">
+                        📅 <?php echo date('M d, Y', strtotime($event['event_date'])); ?> • 
+                        📍 <?php echo htmlspecialchars($event['location'] ?? 'Location TBA'); ?>
+                    </div>
+
+                    <?php if (!empty($event['organizations'])): ?>
+                    <div class="leaderboard">
+                        <?php 
+                        $rank = 1;
+                        foreach ($event['organizations'] as $org): 
+                        ?>
+                        <div class="leaderboard-item">
+                            <div class="org-rank">
+                                <div class="rank-number rank-<?php echo $rank; ?>"><?php echo $rank; ?></div>
+                                <div class="org-name"><?php echo htmlspecialchars($org['org_name']); ?></div>
+                            </div>
+                            <div class="org-score"><?php echo number_format($org['avg_score'] ?? 0, 2); ?> pts</div>
                         </div>
+                        <?php 
+                        $rank++;
+                        endforeach; 
+                        ?>
                     </div>
-                    <div class="event-details">
-                        <strong>Date:</strong> <?php echo date('M d, Y', strtotime($event['event_date'])); ?>
-                    </div>
-                    <div class="event-details">
-                        <strong>Location:</strong> <?php echo htmlspecialchars($event['location'] ?? 'TBA'); ?>
+                    <?php endif; ?>
+
+                    <div class="tournament-footer">
+                        <div class="tournament-stats">
+                            <span><?php echo $event['org_count']; ?> orgs</span>
+                            <span><?php echo $event['total_participants']; ?> athletes</span>
+                            <span><?php echo $event['total_scores']; ?> scores</span>
+                        </div>
+                        
+                        <a href="leaderboard.php?event_id=<?php echo $event['event_id']; ?>" class="view-btn">
+                            View Live Score
+                        </a>
                     </div>
                 </div>
-                <?php endforeach; ?>
+            </div>
+            <?php endforeach; ?>
+        </div>
+        <?php else: ?>
+        <div class="no-events">
+            <h3>No Active Competitions</h3>
+            <p>Check back soon for upcoming gymnastics tournaments and competitions.</p>
+        </div>
+        <?php endif; ?>
+
+        <!-- System Statistics -->
+        <div class="stats-section">
+            <h2 class="section-title">Platform Statistics</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-number"><?php echo $stats['total_events']; ?></div>
+                    <div class="stat-label">Active Events</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number"><?php echo $stats['total_orgs']; ?></div>
+                    <div class="stat-label">Organizations</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number"><?php echo $stats['total_athletes']; ?></div>
+                    <div class="stat-label">Athletes</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-number"><?php echo $stats['total_scores']; ?></div>
+                    <div class="stat-label">Total Scores</div>
+                </div>
             </div>
         </div>
-    </section>
-    <?php endif; ?>
+    </div>
 
     <footer class="footer">
         <div class="container">
-            <p>&copy; <?php echo date('Y'); ?> Gymnastics Scoring System. Professional competition management platform.</p>
+            <p>Made by <a href="#">hazimdev</a> • Professional Gymnastics Scoring Platform</p>
         </div>
     </footer>
 
     <script>
-        // Auto-refresh stats every 30 seconds
-        setTimeout(() => {
-            window.location.reload();
-        }, 30000);
+        // Auto-refresh every 30 seconds for live updates
+        if (window.location.pathname.includes('index.php') || window.location.pathname === '/') {
+            setTimeout(() => {
+                window.location.reload();
+            }, 30000);
+        }
+
+        // Add smooth scroll for navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                // Handle navigation
+            });
+        });
+
+        // Live status animations
+        document.addEventListener('DOMContentLoaded', function() {
+            const liveCards = document.querySelectorAll('.status-active');
+            liveCards.forEach(card => {
+                card.style.animation = 'pulse 2s infinite';
+            });
+        });
     </script>
 </body>
 </html>

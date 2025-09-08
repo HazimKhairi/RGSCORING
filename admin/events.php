@@ -11,13 +11,14 @@ $conn = $database->getConnection();
 $message = '';
 $error = '';
 
-// Handle event creation/update
+// Handle event operations
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if (isset($_POST['create_event'])) {
         $event_name = trim($_POST['event_name']);
         $event_date = $_POST['event_date'];
         $location = trim($_POST['location']);
         $status = $_POST['status'];
+        $description = trim($_POST['description']);
         
         if (!empty($event_name) && !empty($event_date)) {
             try {
@@ -68,7 +69,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $event_id = $_POST['event_id'];
         
         try {
-            // Check if event has scores
             $check_query = "SELECT COUNT(*) FROM scores WHERE event_id = :event_id";
             $check_stmt = $conn->prepare($check_query);
             $check_stmt->bindParam(':event_id', $event_id);
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $score_count = $check_stmt->fetchColumn();
             
             if ($score_count > 0) {
-                $error = "Cannot delete event with existing scores. Please remove scores first.";
+                $error = "Cannot delete event with existing scores.";
             } else {
                 $query = "DELETE FROM events WHERE event_id = :event_id";
                 $stmt = $conn->prepare($query);
@@ -93,7 +93,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 // Get all events
 $events_query = "SELECT e.*, u.full_name as creator_name,
-                        (SELECT COUNT(*) FROM scores s WHERE s.event_id = e.event_id) as total_scores
+                        (SELECT COUNT(*) FROM scores s WHERE s.event_id = e.event_id) as total_scores,
+                        (SELECT COUNT(DISTINCT g.gymnast_id) FROM scores s 
+                         JOIN gymnasts g ON s.gymnast_id = g.gymnast_id 
+                         WHERE s.event_id = e.event_id) as total_athletes
                  FROM events e 
                  JOIN users u ON e.created_by = u.user_id 
                  ORDER BY e.event_date DESC";
@@ -117,7 +120,8 @@ if (isset($_GET['edit'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Event Management - Gymnastics Scoring</title>
+    <title>Events Management - Gymnastics Scoring System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -126,89 +130,224 @@ if (isset($_GET['edit'])) {
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            font-family: 'Poppins', sans-serif;
+            background: #F8FAFC;
+            color: #334155;
+            overflow-x: hidden;
         }
 
-        .header {
-            background: #3498db;
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header-content {
-            max-width: 1200px;
-            margin: 0 auto;
+        .dashboard-container {
             display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 0 1rem;
+            min-height: 100vh;
         }
 
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #E2E8F0;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
         }
 
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+        .sidebar-header {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid #E2E8F0;
             margin-bottom: 2rem;
         }
 
-        .btn {
-            padding: 0.8rem 1.5rem;
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1E293B;
+        }
+
+        .nav-menu {
+            padding: 0 1rem;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 10px;
+            color: #64748B;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .nav-item:hover {
+            background: #F1F5F9;
+            color: #334155;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+        }
+
+        .nav-item.active .nav-icon {
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #64748B;
+        }
+
+        .nav-text {
+            font-size: 0.9rem;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 1rem;
+            right: 1rem;
+        }
+
+        .sign-out-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+            color: #EF4444;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid #FEE2E2;
+            background: #FEF2F2;
+        }
+
+        .sign-out-btn:hover {
+            background: #FEE2E2;
+            border-color: #EF4444;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            background: white;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 0.25rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748B;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-separator {
+            color: #CBD5E1;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .new-event-btn {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            display: inline-block;
-            text-align: center;
             transition: all 0.3s ease;
             font-size: 0.9rem;
         }
 
-        .btn-primary { background: #3498db; color: white; }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-warning { background: #f39c12; color: white; }
-        .btn-danger { background: #e74c3c; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-
-        .btn:hover {
+        .new-event-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
 
-        .card {
+        .content-area {
+            padding: 2rem;
+        }
+
+        /* Event Form */
+        .event-form-card {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
-            overflow: hidden;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            padding: 2rem;
             margin-bottom: 2rem;
         }
 
-        .card-header {
-            background: #34495e;
-            color: white;
-            padding: 1.5rem;
-            font-size: 1.2rem;
-            font-weight: bold;
+        .form-header {
+            margin-bottom: 2rem;
         }
 
-        .card-body {
-            padding: 2rem;
+        .form-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 0.5rem;
+        }
+
+        .form-subtitle {
+            color: #64748B;
+            font-size: 0.9rem;
         }
 
         .form-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
             gap: 1.5rem;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .form-group {
@@ -216,322 +355,596 @@ if (isset($_GET['edit'])) {
             flex-direction: column;
         }
 
-        .form-group label {
-            font-weight: 600;
+        .form-label {
+            font-weight: 500;
+            color: #374151;
             margin-bottom: 0.5rem;
-            color: #555;
+            font-size: 0.875rem;
         }
 
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            padding: 0.8rem;
-            border: 2px solid #e1e8ed;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
+        .form-input {
+            padding: 0.875rem 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.2s ease;
+            background: #F9FAFB;
         }
 
-        .form-group input:focus,
-        .form-group select:focus,
-        .form-group textarea:focus {
+        .form-input:focus {
             outline: none;
-            border-color: #3498db;
+            border-color: #8B5CF6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .form-select {
+            padding: 0.875rem 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+            background: #F9FAFB;
+            transition: all 0.2s ease;
+        }
+
+        .form-select:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .form-textarea {
+            padding: 0.875rem 1rem;
+            border: 2px solid #E5E7EB;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+            resize: vertical;
+            min-height: 100px;
+            background: #F9FAFB;
+            transition: all 0.2s ease;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            background: white;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 0.875rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .btn-secondary {
+            background: #F1F5F9;
+            color: #64748B;
+            border: 1px solid #E2E8F0;
+        }
+
+        .btn-secondary:hover {
+            background: #E2E8F0;
+            color: #334155;
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.4);
+        }
+
+        /* Events Table */
+        .events-table-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            overflow: hidden;
+        }
+
+        .table-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .table-title {
+            font-weight: 600;
+            color: #1E293B;
+            font-size: 1.125rem;
         }
 
         .table-container {
             overflow-x: auto;
         }
 
-        .table {
+        .events-table {
             width: 100%;
             border-collapse: collapse;
-            background: white;
         }
 
-        .table th,
-        .table td {
-            padding: 1rem;
+        .events-table th {
+            background: #F8FAFC;
+            padding: 1rem 1.5rem;
             text-align: left;
-            border-bottom: 1px solid #e1e8ed;
-        }
-
-        .table th {
-            background: #f8f9fa;
             font-weight: 600;
-            color: #2c3e50;
+            color: #374151;
+            border-bottom: 1px solid #E2E8F0;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .table tr:hover {
-            background: #f8f9fa;
+        .events-table td {
+            padding: 1rem 1.5rem;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.9rem;
+        }
+
+        .events-table tr:hover {
+            background: #F8FAFC;
         }
 
         .status-badge {
-            padding: 0.3rem 0.8rem;
+            padding: 0.375rem 0.875rem;
             border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .status-upcoming { background: #3498db; color: white; }
-        .status-active { background: #27ae60; color: white; }
-        .status-completed { background: #95a5a6; color: white; }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
+        .status-upcoming {
+            background: #FEF3C7;
+            color: #D97706;
         }
 
-        .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+        .status-active {
+            background: #D1FAE5;
+            color: #059669;
         }
 
-        .alert-error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
+        .status-completed {
+            background: #E5E7EB;
+            color: #6B7280;
         }
 
         .action-buttons {
             display: flex;
             gap: 0.5rem;
-            flex-wrap: wrap;
+            align-items: center;
         }
 
-        @media (max-width: 768px) {
-            .page-header {
-                flex-direction: column;
-                gap: 1rem;
-                text-align: center;
+        .btn-small {
+            padding: 0.5rem 1rem;
+            font-size: 0.8rem;
+        }
+
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+        }
+
+        .alert-success {
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
+        }
+
+        .alert-error {
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
             }
-            
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
             .form-grid {
                 grid-template-columns: 1fr;
             }
-            
-            .action-buttons {
+        }
+
+        @media (max-width: 768px) {
+            .top-header {
+                padding: 1rem;
                 flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
             }
-            
-            .table th,
-            .table td {
-                padding: 0.5rem;
-                font-size: 0.9rem;
+
+            .content-area {
+                padding: 1rem;
+            }
+
+            .event-form-card {
+                padding: 1.5rem;
+            }
+
+            .form-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .events-table th,
+            .events-table td {
+                padding: 0.75rem 1rem;
+                font-size: 0.8rem;
             }
         }
 
-        .modal {
+        .mobile-menu-btn {
             display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-        }
-
-        .modal-content {
-            background: white;
-            margin: 5% auto;
-            padding: 2rem;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 500px;
-            position: relative;
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .close {
-            font-size: 2rem;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748B;
             cursor: pointer;
-            color: #999;
         }
 
-        .close:hover {
-            color: #333;
+        @media (max-width: 1024px) {
+            .mobile-menu-btn {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <h1>Event Management</h1>
-            <div>
-                <a href="../dashboard.php" class="btn btn-secondary">Dashboard</a>
-                <a href="../logout.php" class="btn btn-danger">Logout</a>
-            </div>
-        </div>
-    </header>
-
-    <div class="container">
-        <?php if ($message): ?>
-            <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
-        <?php endif; ?>
-
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-        <?php endif; ?>
-
-        <div class="page-header">
-            <h2>Manage Events</h2>
-            <button onclick="openModal('createModal')" class="btn btn-success">Create New Event</button>
-        </div>
-
-        <!-- Events Table -->
-        <div class="card">
-            <div class="card-header">All Events</div>
-            <div class="card-body">
-                <div class="table-container">
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Event Name</th>
-                                <th>Date</th>
-                                <th>Location</th>
-                                <th>Status</th>
-                                <th>Creator</th>
-                                <th>Scores</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <?php foreach ($events as $event): ?>
-                            <tr>
-                                <td><strong><?php echo htmlspecialchars($event['event_name']); ?></strong></td>
-                                <td><?php echo date('M d, Y', strtotime($event['event_date'])); ?></td>
-                                <td><?php echo htmlspecialchars($event['location'] ?? 'TBA'); ?></td>
-                                <td>
-                                    <span class="status-badge status-<?php echo $event['status']; ?>">
-                                        <?php echo ucfirst($event['status']); ?>
-                                    </span>
-                                </td>
-                                <td><?php echo htmlspecialchars($event['creator_name']); ?></td>
-                                <td><?php echo $event['total_scores']; ?> scores</td>
-                                <td>
-                                    <div class="action-buttons">
-                                        <a href="?edit=<?php echo $event['event_id']; ?>" class="btn btn-warning">Edit</a>
-                                        <a href="assign-judges.php?event_id=<?php echo $event['event_id']; ?>" class="btn btn-primary">Judges</a>
-                                        <a href="athletes.php?event_id=<?php echo $event['event_id']; ?>" class="btn btn-success">Athletes</a>
-                                        <?php if ($event['total_scores'] == 0): ?>
-                                        <button onclick="deleteEvent(<?php echo $event['event_id']; ?>)" class="btn btn-danger">Delete</button>
-                                        <?php endif; ?>
-                                    </div>
-                                </td>
-                            </tr>
-                            <?php endforeach; ?>
-                        </tbody>
-                    </table>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🤸</div>
+                    <div class="logo-text">GymnasticsScore</div>
                 </div>
             </div>
-        </div>
-    </div>
 
-    <!-- Create Event Modal -->
-    <div id="createModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3><?php echo $edit_event ? 'Edit Event' : 'Create New Event'; ?></h3>
-                <span class="close" onclick="closeModal('createModal')">&times;</span>
-            </div>
-            <form method="POST">
-                <?php if ($edit_event): ?>
-                    <input type="hidden" name="event_id" value="<?php echo $edit_event['event_id']; ?>">
+            <nav class="nav-menu">
+                <a href="../dashboard.php" class="nav-item">
+                    <div class="nav-icon">📊</div>
+                    <div class="nav-text">Dashboard</div>
+                </a>
+
+                <a href="events.php" class="nav-item active">
+                    <div class="nav-icon">🏆</div>
+                    <div class="nav-text">Events Module</div>
+                </a>
+
+                <a href="judges.php" class="nav-item">
+                    <div class="nav-icon">👨‍⚖️</div>
+                    <div class="nav-text">Judges Module</div>
+                </a>
+
+                <a href="athletes.php" class="nav-item">
+                    <div class="nav-icon">🤸‍♂️</div>
+                    <div class="nav-text">Athletes Module</div>
+                </a>
+
+                <a href="teams.php" class="nav-item">
+                    <div class="nav-icon">👥</div>
+                    <div class="nav-text">Teams Module</div>
+                </a>
+
+                <a href="organizations.php" class="nav-item">
+                    <div class="nav-icon">🏢</div>
+                    <div class="nav-text">Organizations</div>
+                </a>
+
+                <a href="reports.php" class="nav-item">
+                    <div class="nav-icon">📈</div>
+                    <div class="nav-text">Reports Module</div>
+                </a>
+
+                <a href="../leaderboard.php" class="nav-item">
+                    <div class="nav-icon">🏅</div>
+                    <div class="nav-text">Live Scores</div>
+                </a>
+
+                <?php if ($_SESSION['role'] == 'super_admin'): ?>
+                <a href="system-management.php" class="nav-item">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-text">Administration</div>
+                </a>
                 <?php endif; ?>
-                
-                <div class="form-group">
-                    <label for="event_name">Event Name *</label>
-                    <input type="text" id="event_name" name="event_name" required 
-                           value="<?php echo $edit_event ? htmlspecialchars($edit_event['event_name']) : ''; ?>">
-                </div>
 
-                <div class="form-group">
-                    <label for="event_date">Event Date *</label>
-                    <input type="date" id="event_date" name="event_date" required 
-                           value="<?php echo $edit_event ? $edit_event['event_date'] : ''; ?>">
-                </div>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">👤</div>
+                    <div class="nav-text">User Management</div>
+                </a>
 
-                <div class="form-group">
-                    <label for="location">Location</label>
-                    <input type="text" id="location" name="location" 
-                           value="<?php echo $edit_event ? htmlspecialchars($edit_event['location']) : ''; ?>">
-                </div>
+                <a href="#" class="nav-item">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-text">Settings</div>
+                </a>
+            </nav>
 
-                <div class="form-group">
-                    <label for="status">Status</label>
-                    <select id="status" name="status" required>
-                        <option value="upcoming" <?php echo ($edit_event && $edit_event['status'] == 'upcoming') ? 'selected' : ''; ?>>Upcoming</option>
-                        <option value="active" <?php echo ($edit_event && $edit_event['status'] == 'active') ? 'selected' : ''; ?>>Active</option>
-                        <option value="completed" <?php echo ($edit_event && $edit_event['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
-                    </select>
-                </div>
+            <div class="sidebar-footer">
+                <a href="../logout.php" class="sign-out-btn">
+                    <div class="nav-icon">🚪</div>
+                    <div class="nav-text">Sign Out</div>
+                </a>
+            </div>
+        </aside>
 
-                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                    <button type="submit" name="<?php echo $edit_event ? 'update_event' : 'create_event'; ?>" class="btn btn-success">
-                        <?php echo $edit_event ? 'Update Event' : 'Create Event'; ?>
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <h1>Events Management</h1>
+                    <div class="breadcrumb">
+                        <span>🏠 Home</span>
+                        <span class="breadcrumb-separator">›</span>
+                        <span>Events</span>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <button class="new-event-btn" onclick="showEventForm()">
+                        ➕ New Event
                     </button>
-                    <button type="button" onclick="closeModal('createModal')" class="btn btn-secondary">Cancel</button>
                 </div>
-            </form>
-        </div>
+            </header>
+
+            <div class="content-area">
+                <?php if ($message): ?>
+                    <div class="alert alert-success">✅ <?php echo htmlspecialchars($message); ?></div>
+                <?php endif; ?>
+
+                <?php if ($error): ?>
+                    <div class="alert alert-error">❌ <?php echo htmlspecialchars($error); ?></div>
+                <?php endif; ?>
+
+                <!-- Event Form -->
+                <div class="event-form-card" id="eventForm" style="<?php echo !$edit_event ? 'display: none;' : ''; ?>">
+                    <div class="form-header">
+                        <h2 class="form-title"><?php echo $edit_event ? 'Edit Event' : 'Create New Event'; ?></h2>
+                        <p class="form-subtitle">Fill in the event details to create or update a gymnastics competition</p>
+                    </div>
+
+                    <form method="POST" action="">
+                        <?php if ($edit_event): ?>
+                            <input type="hidden" name="event_id" value="<?php echo $edit_event['event_id']; ?>">
+                        <?php endif; ?>
+
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label class="form-label">Event Name *</label>
+                                <input type="text" name="event_name" class="form-input" 
+                                       placeholder="e.g., Spring Championship 2025"
+                                       value="<?php echo $edit_event ? htmlspecialchars($edit_event['event_name']) : ''; ?>" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Event Date *</label>
+                                <input type="date" name="event_date" class="form-input" 
+                                       value="<?php echo $edit_event ? $edit_event['event_date'] : ''; ?>" 
+                                       min="<?php echo date('Y-m-d'); ?>" required>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Location</label>
+                                <input type="text" name="location" class="form-input" 
+                                       placeholder="e.g., Main Gymnasium, Sports Complex"
+                                       value="<?php echo $edit_event ? htmlspecialchars($edit_event['location']) : ''; ?>">
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Status</label>
+                                <select name="status" class="form-select">
+                                    <option value="upcoming" <?php echo ($edit_event && $edit_event['status'] == 'upcoming') ? 'selected' : ''; ?>>Upcoming</option>
+                                    <option value="active" <?php echo ($edit_event && $edit_event['status'] == 'active') ? 'selected' : ''; ?>>Active</option>
+                                    <option value="completed" <?php echo ($edit_event && $edit_event['status'] == 'completed') ? 'selected' : ''; ?>>Completed</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Event Description</label>
+                            <textarea name="description" class="form-textarea" 
+                                      placeholder="Optional description about the event, rules, or special notes..."><?php echo $edit_event ? htmlspecialchars($edit_event['description'] ?? '') : ''; ?></textarea>
+                        </div>
+
+                        <div class="form-actions">
+                            <button type="submit" name="<?php echo $edit_event ? 'update_event' : 'create_event'; ?>" class="btn btn-primary">
+                                <?php echo $edit_event ? '💾 Update Event' : '🏆 Create Event'; ?>
+                            </button>
+                            <button type="button" onclick="hideEventForm()" class="btn btn-secondary">
+                                ❌ Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Events Table -->
+                <div class="events-table-card">
+                    <div class="table-header">
+                        <h2 class="table-title">All Events</h2>
+                        <span style="color: #64748B; font-size: 0.875rem;"><?php echo count($events); ?> events total</span>
+                    </div>
+
+                    <div class="table-container">
+                        <table class="events-table">
+                            <thead>
+                                <tr>
+                                    <th>Event Name</th>
+                                    <th>Date</th>
+                                    <th>Location</th>
+                                    <th>Status</th>
+                                    <th>Athletes</th>
+                                    <th>Scores</th>
+                                    <th>Creator</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php foreach ($events as $event): ?>
+                                <tr>
+                                    <td>
+                                        <strong style="color: #1E293B;"><?php echo htmlspecialchars($event['event_name']); ?></strong>
+                                    </td>
+                                    <td style="color: #64748B;">
+                                        <?php echo date('M d, Y', strtotime($event['event_date'])); ?>
+                                    </td>
+                                    <td style="color: #64748B;">
+                                        <?php echo htmlspecialchars($event['location'] ?? 'TBA'); ?>
+                                    </td>
+                                    <td>
+                                        <span class="status-badge status-<?php echo $event['status']; ?>">
+                                            <?php echo ucfirst($event['status']); ?>
+                                        </span>
+                                    </td>
+                                    <td style="color: #8B5CF6; font-weight: 600;">
+                                        <?php echo $event['total_athletes']; ?>
+                                    </td>
+                                    <td style="color: #10B981; font-weight: 600;">
+                                        <?php echo $event['total_scores']; ?>
+                                    </td>
+                                    <td style="color: #64748B;">
+                                        <?php echo htmlspecialchars($event['creator_name']); ?>
+                                    </td>
+                                    <td>
+                                        <div class="action-buttons">
+                                            <a href="?edit=<?php echo $event['event_id']; ?>" class="btn btn-secondary btn-small">
+                                                ✏️ Edit
+                                            </a>
+                                            <a href="assign-judges.php?event_id=<?php echo $event['event_id']; ?>" class="btn btn-primary btn-small">
+                                                👨‍⚖️ Judges
+                                            </a>
+                                            <?php if ($event['total_scores'] == 0): ?>
+                                                <button onclick="deleteEvent(<?php echo $event['event_id']; ?>)" class="btn btn-danger btn-small">
+                                                    🗑️ Delete
+                                                </button>
+                                            <?php endif; ?>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h3>Confirm Delete</h3>
-                <span class="close" onclick="closeModal('deleteModal')">&times;</span>
-            </div>
-            <p>Are you sure you want to delete this event? This action cannot be undone.</p>
+    <div id="deleteModal" style="display: none; position: fixed; z-index: 2000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);">
+        <div style="background: white; margin: 10% auto; padding: 2rem; border-radius: 16px; width: 90%; max-width: 400px;">
+            <h3 style="margin-bottom: 1rem; color: #1E293B;">Confirm Delete</h3>
+            <p style="margin-bottom: 2rem; color: #64748B;">Are you sure you want to delete this event? This action cannot be undone.</p>
             <form method="POST" id="deleteForm">
                 <input type="hidden" name="event_id" id="deleteEventId">
-                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
-                    <button type="submit" name="delete_event" class="btn btn-danger">Delete Event</button>
-                    <button type="button" onclick="closeModal('deleteModal')" class="btn btn-secondary">Cancel</button>
+                <div style="display: flex; gap: 1rem;">
+                    <button type="submit" name="delete_event" class="btn btn-danger">🗑️ Delete Event</button>
+                    <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">❌ Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        function openModal(modalId) {
-            document.getElementById(modalId).style.display = 'block';
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
         }
 
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
+        function showEventForm() {
+            document.getElementById('eventForm').style.display = 'block';
+            document.querySelector('input[name="event_name"]').focus();
+        }
+
+        function hideEventForm() {
+            document.getElementById('eventForm').style.display = 'none';
+            // Clear form if not editing
+            <?php if (!$edit_event): ?>
+            document.querySelector('form').reset();
+            <?php endif; ?>
         }
 
         function deleteEvent(eventId) {
             document.getElementById('deleteEventId').value = eventId;
-            openModal('deleteModal');
+            document.getElementById('deleteModal').style.display = 'block';
         }
 
-        // Auto-open edit modal if edit parameter is present
-        <?php if ($edit_event): ?>
-        openModal('createModal');
-        <?php endif; ?>
+        function closeDeleteModal() {
+            document.getElementById('deleteModal').style.display = 'none';
+        }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 1024) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
 
         // Close modal when clicking outside
         window.onclick = function(event) {
-            const modals = document.querySelectorAll('.modal');
-            modals.forEach(modal => {
-                if (event.target == modal) {
-                    modal.style.display = 'none';
-                }
-            });
+            const modal = document.getElementById('deleteModal');
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
         }
+
+        // Auto-show form if editing
+        <?php if ($edit_event): ?>
+        document.getElementById('eventForm').style.display = 'block';
+        <?php endif; ?>
     </script>
 </body>
 </html>

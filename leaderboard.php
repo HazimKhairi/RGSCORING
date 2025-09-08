@@ -31,8 +31,8 @@ if (isset($_GET['event_id']) && !empty($_GET['event_id'])) {
     $selected_apparatus = $_GET['apparatus'] ?? '';
 }
 
-// Function to get leaderboard data
-function getLeaderboardData($conn, $event_id, $category = '', $apparatus = '') {
+// Function to get detailed leaderboard data
+function getDetailedLeaderboardData($conn, $event_id, $category = '', $apparatus = '') {
     $where_conditions = ["s.event_id = :event_id"];
     $params = [':event_id' => $event_id];
     
@@ -53,6 +53,7 @@ function getLeaderboardData($conn, $event_id, $category = '', $apparatus = '') {
                 g.gymnast_name,
                 g.gymnast_category,
                 t.team_name,
+                o.org_name,
                 a.apparatus_name,
                 s.score_d1, s.score_d2, s.score_d3, s.score_d4,
                 s.score_a1, s.score_a2, s.score_a3,
@@ -62,6 +63,7 @@ function getLeaderboardData($conn, $event_id, $category = '', $apparatus = '') {
               FROM scores s
               JOIN gymnasts g ON s.gymnast_id = g.gymnast_id
               JOIN teams t ON g.team_id = t.team_id
+              LEFT JOIN organizations o ON t.organization_id = o.org_id
               JOIN apparatus a ON s.apparatus_id = a.apparatus_id
               WHERE {$where_clause}
               ORDER BY g.gymnast_name, a.apparatus_name";
@@ -73,7 +75,7 @@ function getLeaderboardData($conn, $event_id, $category = '', $apparatus = '') {
     $stmt->execute();
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
     
-    // Calculate final scores and group by gymnast
+    // Calculate scores and add calculations
     $leaderboard = [];
     foreach ($results as $row) {
         $score = new Score(
@@ -83,25 +85,22 @@ function getLeaderboardData($conn, $event_id, $category = '', $apparatus = '') {
             $row['technical_deduction'], $row['gymnast_id']
         );
         
-        $gymnast_key = $row['gymnast_id'];
-        if (!isset($leaderboard[$gymnast_key])) {
-            $leaderboard[$gymnast_key] = [
-                'gymnast_name' => $row['gymnast_name'],
-                'team_name' => $row['team_name'],
-                'category' => $row['gymnast_category'],
-                'total_score' => 0,
-                'apparatus_scores' => []
-            ];
-        }
+        // Add calculated values
+        $row['d1_d2_avg'] = $score->getAverageD1andD2();
+        $row['d3_d4_avg'] = $score->getAverageD3andD4();
+        $row['total_d'] = $score->totalScoreD();
+        $row['middle_a'] = $score->getMiddleAScore();
+        $row['middle_e'] = $score->getMiddleEScore();
+        $row['a_deduction'] = 10 - $row['middle_a'];
+        $row['e_deduction'] = 10 - $row['middle_e'];
+        $row['final_score'] = $score->getFinalScore();
         
-        $final_score = $score->getFinalScore();
-        $leaderboard[$gymnast_key]['apparatus_scores'][$row['apparatus_name']] = $final_score;
-        $leaderboard[$gymnast_key]['total_score'] += $final_score;
+        $leaderboard[] = $row;
     }
     
-    // Sort by total score descending
-    uasort($leaderboard, function($a, $b) {
-        return $b['total_score'] <=> $a['total_score'];
+    // Sort by final score descending
+    usort($leaderboard, function($a, $b) {
+        return $b['final_score'] <=> $a['final_score'];
     });
     
     return $leaderboard;
@@ -109,7 +108,7 @@ function getLeaderboardData($conn, $event_id, $category = '', $apparatus = '') {
 
 $leaderboard_data = [];
 if ($selected_event) {
-    $leaderboard_data = getLeaderboardData($conn, $selected_event['event_id'], $selected_category, $selected_apparatus);
+    $leaderboard_data = getDetailedLeaderboardData($conn, $selected_event['event_id'], $selected_category, $selected_apparatus);
 }
 
 // Get categories and apparatus for filters
@@ -135,7 +134,8 @@ if ($selected_event) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Live Leaderboard - Gymnastics Scoring</title>
+    <title>Live Leaderboard - Rhythmic Gymnastics Scoring</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -144,50 +144,66 @@ if ($selected_event) {
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            font-family: 'Poppins', sans-serif;
+            background: #1A1B23;
+            color: white;
+            min-height: 100vh;
         }
 
         .header {
-            background: #2c3e50;
-            color: white;
+            background: #1A1B23;
             padding: 1rem 0;
+            border-bottom: 1px solid #2D2E3F;
             position: sticky;
             top: 0;
             z-index: 1000;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
         .header-content {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 1rem;
+            padding: 0 2rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            font-size: 1.3rem;
-            font-weight: bold;
+            gap: 1rem;
+        }
+
+        .logo-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: white;
         }
 
         .live-indicator {
             display: flex;
             align-items: center;
             gap: 0.5rem;
-            background: #e74c3c;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
+            background: #10B981;
+            padding: 0.75rem 1.5rem;
+            border-radius: 25px;
+            font-weight: 600;
         }
 
         .live-dot {
-            width: 8px;
-            height: 8px;
+            width: 10px;
+            height: 10px;
             background: white;
             border-radius: 50%;
             animation: pulse 2s infinite;
@@ -199,24 +215,56 @@ if ($selected_event) {
         }
 
         .container {
-            max-width: 1400px;
+            max-width: 1600px;
             margin: 0 auto;
-            padding: 1rem;
+            padding: 2rem;
         }
 
-        .event-selector {
-            background: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            margin-bottom: 1.5rem;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: #2D2E3F;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 500;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
         }
 
-        .filters {
+        .back-btn:hover {
+            background: #3D3E4F;
+            transform: translateX(-2px);
+        }
+
+        .page-header {
+            margin-bottom: 2rem;
+        }
+
+        .page-title {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .filters-section {
+            background: #2D2E3F;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            border: 1px solid #3D3E4F;
+        }
+
+        .filters-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1rem;
-            margin-bottom: 1rem;
+            gap: 1.5rem;
         }
 
         .filter-group {
@@ -224,209 +272,206 @@ if ($selected_event) {
             flex-direction: column;
         }
 
-        label {
+        .filter-group label {
             font-weight: 600;
-            margin-bottom: 0.5rem;
-            color: #555;
+            margin-bottom: 0.75rem;
+            color: white;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        select {
-            padding: 0.8rem;
-            border: 2px solid #e1e8ed;
+        .filter-group select {
+            padding: 1rem;
+            border: 2px solid #3D3E4F;
             border-radius: 8px;
             font-size: 1rem;
-            background: white;
+            background: #1A1B23;
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            transition: all 0.3s ease;
         }
 
-        select:focus {
+        .filter-group select:focus {
             outline: none;
-            border-color: #3498db;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
         }
 
         .leaderboard-container {
-            background: white;
-            border-radius: 15px;
+            background: #2D2E3F;
+            border-radius: 16px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border: 1px solid #3D3E4F;
+            margin-bottom: 2rem;
         }
 
         .leaderboard-header {
-            background: #34495e;
-            color: white;
-            padding: 1.5rem;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            padding: 2rem;
             text-align: center;
         }
 
         .leaderboard-title {
-            font-size: 1.8rem;
+            font-size: 2rem;
+            font-weight: 700;
             margin-bottom: 0.5rem;
         }
 
         .event-info {
             opacity: 0.9;
-            font-size: 1rem;
+            font-size: 1.1rem;
         }
 
-        .leaderboard-table {
+        .table-container {
+            overflow-x: auto;
+            background: #1A1B23;
+        }
+
+        .detailed-table {
             width: 100%;
             border-collapse: collapse;
+            min-width: 1400px;
         }
 
-        .leaderboard-table th {
-            background: #ecf0f1;
-            padding: 1rem;
-            text-align: left;
-            font-weight: 600;
-            color: #2c3e50;
-            border-bottom: 2px solid #bdc3c7;
-        }
-
-        .leaderboard-table td {
-            padding: 1rem;
-            border-bottom: 1px solid #ecf0f1;
-        }
-
-        .leaderboard-table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .rank {
-            font-weight: bold;
-            font-size: 1.2rem;
+        .detailed-table th {
+            background: #2D2E3F;
+            padding: 1rem 0.75rem;
             text-align: center;
-            width: 60px;
+            font-weight: 600;
+            color: #A3A3A3;
+            border-bottom: 2px solid #3D3E4F;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .rank-1 { color: #f39c12; }
-        .rank-2 { color: #95a5a6; }
-        .rank-3 { color: #e67e22; }
-
-        .gymnast-name {
-            font-weight: bold;
-            font-size: 1.1rem;
-            color: #2c3e50;
-        }
-
-        .team-name {
-            color: #7f8c8d;
+        .detailed-table td {
+            padding: 1rem 0.75rem;
+            text-align: center;
+            border-bottom: 1px solid #2D2E3F;
             font-size: 0.9rem;
         }
 
-        .score {
-            font-weight: bold;
+        .detailed-table tbody tr:hover {
+            background: #2D2E3F;
+        }
+
+        .section-header {
+            background: #3D3E4F;
+            color: #8B5CF6;
+            font-weight: 700;
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .rank-cell {
+            font-weight: 700;
             font-size: 1.1rem;
-            text-align: center;
+            color: #8B5CF6;
         }
 
-        .total-score {
-            background: #3498db;
-            color: white;
-            padding: 0.5rem;
-            border-radius: 5px;
-            font-size: 1.2rem;
-        }
-
-        .apparatus-score {
-            text-align: center;
+        .gymnast-cell {
+            text-align: left !important;
             font-weight: 600;
+            color: white;
+        }
+
+        .club-cell {
+            text-align: left !important;
+            color: #A3A3A3;
+            font-size: 0.85rem;
+        }
+
+        .apparatus-cell {
+            font-weight: 600;
+            color: #10B981;
+        }
+
+        .score-cell {
+            font-weight: 500;
+            color: #F3F4F6;
+        }
+
+        .final-score-cell {
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #8B5CF6;
+            background: #2D2E3F;
+        }
+
+        .difficulty-section {
+            background: rgba(59, 130, 246, 0.1);
+        }
+
+        .execution-section {
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .artistry-section {
+            background: rgba(245, 158, 11, 0.1);
         }
 
         .no-data {
             text-align: center;
-            padding: 3rem;
-            color: #7f8c8d;
-            font-size: 1.1rem;
+            padding: 4rem 2rem;
+            color: #A3A3A3;
         }
 
-        .back-btn {
-            display: inline-block;
-            padding: 0.8rem 1.5rem;
-            background: #3498db;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
+        .no-data h3 {
+            font-size: 1.5rem;
             margin-bottom: 1rem;
-            font-weight: 600;
-        }
-
-        .back-btn:hover {
-            background: #2980b9;
-        }
-
-        /* Mobile Responsive - Priority: Name and Score */
-        @media (max-width: 768px) {
-            .leaderboard-table {
-                font-size: 0.9rem;
-            }
-            
-            .leaderboard-table th,
-            .leaderboard-table td {
-                padding: 0.8rem 0.5rem;
-            }
-            
-            /* Hide less important columns on mobile */
-            .apparatus-columns {
-                display: none;
-            }
-            
-            .gymnast-info {
-                max-width: 150px;
-            }
-            
-            .gymnast-name {
-                font-size: 1rem;
-                display: block;
-            }
-            
-            .team-name {
-                font-size: 0.8rem;
-                display: block;
-                margin-top: 0.2rem;
-            }
-            
-            .total-score {
-                font-size: 1.1rem;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 0.5rem;
-            }
-            
-            .header-content {
-                flex-direction: column;
-                gap: 0.5rem;
-            }
-            
-            .filters {
-                grid-template-columns: 1fr;
-            }
-            
-            .leaderboard-table th,
-            .leaderboard-table td {
-                padding: 0.6rem 0.3rem;
-            }
-            
-            .rank {
-                width: 40px;
-            }
-            
-            .gymnast-name {
-                font-size: 0.9rem;
-            }
-            
-            .team-name {
-                font-size: 0.75rem;
-            }
+            color: white;
         }
 
         .refresh-info {
             text-align: center;
-            padding: 1rem;
-            color: #7f8c8d;
+            padding: 1.5rem;
+            color: #A3A3A3;
+            background: #2D2E3F;
+            border-top: 1px solid #3D3E4F;
             font-size: 0.9rem;
-            background: #f8f9fa;
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .header-content {
+                padding: 0 1rem;
+                flex-direction: column;
+                gap: 1rem;
+            }
+            
+            .container {
+                padding: 1rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+            
+            .filters-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .detailed-table {
+                min-width: 800px;
+            }
+            
+            .detailed-table th,
+            .detailed-table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.8rem;
+            }
+        }
+
+        .rank-1 { color: #F59E0B; }
+        .rank-2 { color: #6B7280; }
+        .rank-3 { color: #CD7C2F; }
+
+        .zero-score {
+            color: #6B7280;
+            opacity: 0.6;
         }
     </style>
 </head>
@@ -434,21 +479,26 @@ if ($selected_event) {
     <header class="header">
         <div class="header-content">
             <div class="logo">
-                🏆 Live Leaderboard
+                <div class="logo-icon">🏆</div>
+                <div class="logo-text">Live Leaderboard</div>
             </div>
             <div class="live-indicator">
                 <div class="live-dot"></div>
-                LIVE
+                LIVE SCORING
             </div>
         </div>
     </header>
 
     <div class="container">
-        <a href="dashboard.php" class="back-btn">← Back to Dashboard</a>
+        <a href="index.php" class="back-btn">← Back to Competitions</a>
 
-        <div class="event-selector">
+        <div class="page-header">
+            <h1 class="page-title">Detailed Scoring Leaderboard</h1>
+        </div>
+
+        <div class="filters-section">
             <form method="GET" action="">
-                <div class="filters">
+                <div class="filters-grid">
                     <div class="filter-group">
                         <label for="event_id">Select Event:</label>
                         <select name="event_id" id="event_id" onchange="this.form.submit()">
@@ -506,47 +556,79 @@ if ($selected_event) {
             </div>
 
             <?php if (!empty($leaderboard_data)): ?>
-            <table class="leaderboard-table">
-                <thead>
-                    <tr>
-                        <th class="rank">Rank</th>
-                        <th>Gymnast</th>
-                        <th class="score">Total Score</th>
-                        <th class="apparatus-columns">Floor</th>
-                        <th class="apparatus-columns">Pommel Horse</th>
-                        <th class="apparatus-columns">Rings</th>
-                        <th class="apparatus-columns">Vault</th>
-                        <th class="apparatus-columns">Parallel Bars</th>
-                        <th class="apparatus-columns">Horizontal Bar</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <?php 
-                    $rank = 1;
-                    foreach ($leaderboard_data as $data): 
-                    ?>
-                    <tr>
-                        <td class="rank rank-<?php echo $rank; ?>"><?php echo $rank; ?></td>
-                        <td class="gymnast-info">
-                            <div class="gymnast-name"><?php echo htmlspecialchars($data['gymnast_name']); ?></div>
-                            <div class="team-name"><?php echo htmlspecialchars($data['team_name']); ?></div>
-                        </td>
-                        <td class="score">
-                            <span class="total-score"><?php echo number_format($data['total_score'], 2); ?></span>
-                        </td>
-                        <td class="apparatus-score apparatus-columns"><?php echo isset($data['apparatus_scores']['Floor Exercise']) ? number_format($data['apparatus_scores']['Floor Exercise'], 2) : '-'; ?></td>
-                        <td class="apparatus-score apparatus-columns"><?php echo isset($data['apparatus_scores']['Pommel Horse']) ? number_format($data['apparatus_scores']['Pommel Horse'], 2) : '-'; ?></td>
-                        <td class="apparatus-score apparatus-columns"><?php echo isset($data['apparatus_scores']['Still Rings']) ? number_format($data['apparatus_scores']['Still Rings'], 2) : '-'; ?></td>
-                        <td class="apparatus-score apparatus-columns"><?php echo isset($data['apparatus_scores']['Vault']) ? number_format($data['apparatus_scores']['Vault'], 2) : '-'; ?></td>
-                        <td class="apparatus-score apparatus-columns"><?php echo isset($data['apparatus_scores']['Parallel Bars']) ? number_format($data['apparatus_scores']['Parallel Bars'], 2) : '-'; ?></td>
-                        <td class="apparatus-score apparatus-columns"><?php echo isset($data['apparatus_scores']['Horizontal Bar']) ? number_format($data['apparatus_scores']['Horizontal Bar'], 2) : '-'; ?></td>
-                    </tr>
-                    <?php 
-                    $rank++;
-                    endforeach; 
-                    ?>
-                </tbody>
-            </table>
+            <div class="table-container">
+                <table class="detailed-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">BIL</th>
+                            <th rowspan="2">GYMNAST</th>
+                            <th rowspan="2">CLUB</th>
+                            <th rowspan="2">APPARATUS</th>
+                            <th colspan="7" class="section-header difficulty-section">DIFFICULTY</th>
+                            <th colspan="7" class="section-header execution-section">EXECUTION</th>
+                            <th rowspan="2" class="section-header artistry-section">FINAL SCORE</th>
+                        </tr>
+                        <tr>
+                            <!-- Difficulty columns -->
+                            <th class="difficulty-section">D1</th>
+                            <th class="difficulty-section">D2</th>
+                            <th class="difficulty-section">D1-D2</th>
+                            <th class="difficulty-section">D3</th>
+                            <th class="difficulty-section">D4</th>
+                            <th class="difficulty-section">D3-D4</th>
+                            <th class="difficulty-section">Total D</th>
+                            <!-- Execution columns -->
+                            <th class="execution-section">A1</th>
+                            <th class="execution-section">A2</th>
+                            <th class="execution-section">A3</th>
+                            <th class="execution-section">10-A(A)</th>
+                            <th class="execution-section">E1</th>
+                            <th class="execution-section">E2</th>
+                            <th class="execution-section">E3</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <?php 
+                        $rank = 1;
+                        foreach ($leaderboard_data as $data): 
+                        ?>
+                        <tr>
+                            <td class="rank-cell rank-<?php echo ($rank <= 3) ? $rank : ''; ?>"><?php echo $rank; ?></td>
+                            <td class="gymnast-cell"><?php echo htmlspecialchars($data['gymnast_name']); ?></td>
+                            <td class="club-cell">
+                                <?php echo htmlspecialchars($data['org_name'] ?? $data['team_name']); ?>
+                                <br><small><?php echo htmlspecialchars($data['gymnast_category']); ?></small>
+                            </td>
+                            <td class="apparatus-cell"><?php echo htmlspecialchars($data['apparatus_name']); ?></td>
+                            
+                            <!-- Difficulty scores -->
+                            <td class="score-cell <?php echo ($data['score_d1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d1'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_d2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d2'], 2); ?></td>
+                            <td class="score-cell"><?php echo number_format($data['d1_d2_avg'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_d3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d3'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_d4'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d4'], 2); ?></td>
+                            <td class="score-cell"><?php echo number_format($data['d3_d4_avg'], 2); ?></td>
+                            <td class="score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
+                            
+                            <!-- Execution scores -->
+                            <td class="score-cell <?php echo ($data['score_a1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a1'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_a2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a2'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_a3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a3'], 2); ?></td>
+                            <td class="score-cell"><?php echo number_format($data['a_deduction'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_e1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e1'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_e2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e2'], 2); ?></td>
+                            <td class="score-cell <?php echo ($data['score_e3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e3'], 2); ?></td>
+                            
+                            <!-- Final score -->
+                            <td class="final-score-cell"><?php echo number_format($data['final_score'], 2); ?></td>
+                        </tr>
+                        <?php 
+                        $rank++;
+                        endforeach; 
+                        ?>
+                    </tbody>
+                </table>
+            </div>
             <?php else: ?>
             <div class="no-data">
                 <h3>No scores available yet</h3>
@@ -555,14 +637,14 @@ if ($selected_event) {
             <?php endif; ?>
 
             <div class="refresh-info">
-                📱 Page automatically refreshes every 15 seconds for live updates
+                📱 Page automatically refreshes every 15 seconds for live updates • Last updated: <?php echo date('H:i:s'); ?>
             </div>
         </div>
         <?php else: ?>
         <div class="leaderboard-container">
             <div class="no-data">
                 <h3>Select an Event</h3>
-                <p>Choose an active event above to view the live leaderboard.</p>
+                <p>Choose an active event above to view the detailed scoring leaderboard.</p>
             </div>
         </div>
         <?php endif; ?>
@@ -574,14 +656,19 @@ if ($selected_event) {
             window.location.reload();
         }, 15000);
 
-        // Show loading indicator during refresh
-        let refreshTimer = 15;
-        setInterval(function() {
-            refreshTimer--;
-            if (refreshTimer <= 0) {
-                refreshTimer = 15;
+        // Smooth scrolling for table on mobile
+        const tableContainer = document.querySelector('.table-container');
+        if (tableContainer) {
+            tableContainer.style.scrollBehavior = 'smooth';
+        }
+
+        // Highlight selected filters
+        document.querySelectorAll('select').forEach(select => {
+            if (select.value) {
+                select.style.borderColor = '#8B5CF6';
+                select.style.background = '#2D2E3F';
             }
-        }, 1000);
+        });
     </script>
 </body>
 </html>
