@@ -9,6 +9,7 @@ $conn = $database->getConnection();
 
 // Get dashboard statistics
 $stats = [];
+$setup_status = [];
 try {
     // Total events by status
     $events_query = "SELECT status, COUNT(*) as count FROM events GROUP BY status";
@@ -33,6 +34,16 @@ try {
     $orgs_stmt = $conn->prepare($orgs_query);
     $orgs_stmt->execute();
     $total_orgs = $orgs_stmt->fetchColumn();
+
+    // Setup status for admin users
+    if (hasRole('admin')) {
+        $setup_status['organizations'] = $total_orgs;
+        $setup_status['teams'] = $conn->query("SELECT COUNT(*) FROM teams")->fetchColumn();
+        $setup_status['athletes'] = $total_athletes;
+        $setup_status['judges'] = $conn->query("SELECT COUNT(*) FROM users WHERE role = 'judge'")->fetchColumn();
+        $setup_status['events'] = array_sum($events_by_status);
+        $setup_status['assignments'] = $conn->query("SELECT COUNT(*) FROM judge_assignments")->fetchColumn();
+    }
     
     // Recent activity
     $activity_query = "SELECT 'Score Entry' as type, s.created_at, u.full_name as user_name, 
@@ -54,6 +65,19 @@ try {
     $total_athletes = 0;
     $total_orgs = 0;
     $recent_activity = [];
+}
+
+// Calculate setup completion for admins
+$setup_completion = 0;
+if (hasRole('admin') && !empty($setup_status)) {
+    $completed_steps = 0;
+    if ($setup_status['organizations'] > 0) $completed_steps++;
+    if ($setup_status['teams'] > 0) $completed_steps++;
+    if ($setup_status['athletes'] > 0) $completed_steps++;
+    if ($setup_status['judges'] > 0) $completed_steps++;
+    if ($setup_status['events'] > 0) $completed_steps++;
+    if ($setup_status['assignments'] > 0) $completed_steps++;
+    $setup_completion = ($completed_steps / 6) * 100;
 }
 ?>
 <!DOCTYPE html>
@@ -285,6 +309,79 @@ try {
             padding: 2rem;
         }
 
+        /* Setup Guide Banner for Admins */
+        .setup-guide-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .setup-guide-banner::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -50%;
+            width: 100%;
+            height: 100%;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><defs><pattern id="grain" width="100" height="100" patternUnits="userSpaceOnUse"><circle cx="25" cy="25" r="1" fill="white" opacity="0.1"/><circle cx="75" cy="75" r="1" fill="white" opacity="0.1"/><circle cx="50" cy="10" r="1" fill="white" opacity="0.1"/><circle cx="10" cy="50" r="1" fill="white" opacity="0.1"/><circle cx="90" cy="30" r="1" fill="white" opacity="0.1"/></pattern></defs><rect width="100" height="100" fill="url(%23grain)"/></svg>');
+            pointer-events: none;
+        }
+
+        .setup-guide-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .setup-guide-banner h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .setup-guide-banner p {
+            opacity: 0.9;
+            margin-bottom: 1.5rem;
+        }
+
+        .setup-progress-bar {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            height: 8px;
+            margin: 1rem 0;
+            overflow: hidden;
+        }
+
+        .setup-progress-fill {
+            background: white;
+            height: 100%;
+            border-radius: 10px;
+            transition: width 0.8s ease;
+        }
+
+        .setup-guide-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.75rem 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .setup-guide-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
         .modules-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
@@ -301,6 +398,7 @@ try {
             cursor: pointer;
             text-decoration: none;
             color: inherit;
+            position: relative;
         }
 
         .module-card:hover {
@@ -332,12 +430,18 @@ try {
             text-align: right;
         }
 
-        .module-label {
+        .module-status {
             font-size: 0.75rem;
             color: #64748B;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             margin-bottom: 0.25rem;
+        }
+
+        .module-count {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #8B5CF6;
         }
 
         .module-title {
@@ -351,6 +455,27 @@ try {
             color: #64748B;
             font-size: 0.875rem;
             line-height: 1.5;
+        }
+
+        .module-hint {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: #F59E0B;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .module-hint.ready {
+            background: #10B981;
+        }
+
+        .module-hint.completed {
+            background: #6B7280;
         }
 
         /* Module specific colors */
@@ -543,6 +668,44 @@ try {
                 display: block;
             }
         }
+
+        .setup-incomplete-notice {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .setup-incomplete-notice .icon {
+            font-size: 1.2rem;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .quick-action-btn {
+            background: #8B5CF6;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            text-decoration: none;
+            font-size: 0.8rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .quick-action-btn:hover {
+            background: #7C3AED;
+            transform: translateY(-1px);
+        }
     </style>
 </head>
 <body>
@@ -563,6 +726,11 @@ try {
                 </a>
 
                 <?php if (hasRole('admin')): ?>
+                <a href="admin/competition-setup-guide.php" class="nav-item">
+                    <div class="nav-icon">🚀</div>
+                    <div class="nav-text">Setup Guide</div>
+                </a>
+
                 <a href="admin/events.php" class="nav-item">
                     <div class="nav-icon">🏆</div>
                     <div class="nav-text">Events Module</div>
@@ -612,11 +780,6 @@ try {
                     <div class="nav-text">Administration</div>
                 </a>
                 <?php endif; ?>
-
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">👤</div>
-                    <div class="nav-text">User Management</div>
-                </a>
             </nav>
 
             <div class="sidebar-footer">
@@ -654,6 +817,49 @@ try {
             </header>
 
             <div class="content-area">
+                <?php if (hasRole('admin')): ?>
+                    <?php if ($setup_completion < 100): ?>
+                    <!-- Setup Guide Banner -->
+                    <div class="setup-guide-banner">
+                        <div class="setup-guide-content">
+                            <h2>🚀 Competition Setup Assistant</h2>
+                            <p>Get your gymnastics competition up and running with our step-by-step setup guide</p>
+                            <div class="setup-progress-bar">
+                                <div class="setup-progress-fill" style="width: <?php echo $setup_completion; ?>%"></div>
+                            </div>
+                            <p style="font-size: 0.9rem; margin-bottom: 1rem;">Setup Progress: <?php echo round($setup_completion); ?>% Complete</p>
+                            <a href="admin/competition-setup-guide.php" class="setup-guide-btn">
+                                📋 Open Setup Guide
+                            </a>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($setup_completion < 50): ?>
+                    <!-- Quick Start Notice -->
+                    <div class="setup-incomplete-notice">
+                        <div class="icon">⚠️</div>
+                        <div>
+                            <strong>Getting Started:</strong> Complete the basic setup to start running competitions. 
+                            <div class="quick-actions">
+                                <?php if ($setup_status['organizations'] == 0): ?>
+                                    <a href="admin/organizations.php" class="quick-action-btn">🏢 Create Organizations</a>
+                                <?php endif; ?>
+                                <?php if ($setup_status['teams'] == 0): ?>
+                                    <a href="admin/teams.php" class="quick-action-btn">👥 Create Teams</a>
+                                <?php endif; ?>
+                                <?php if ($setup_status['athletes'] == 0): ?>
+                                    <a href="admin/athletes.php" class="quick-action-btn">🤸‍♂️ Add Athletes</a>
+                                <?php endif; ?>
+                                <?php if ($setup_status['judges'] == 0): ?>
+                                    <a href="admin/judges.php" class="quick-action-btn">👨‍⚖️ Register Judges</a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+                <?php endif; ?>
+
                 <!-- Module Cards -->
                 <div class="modules-grid">
                     <?php if (hasRole('admin')): ?>
@@ -661,40 +867,106 @@ try {
                         <div class="module-header">
                             <div class="module-icon">🏆</div>
                             <div class="module-meta">
-                                <div class="module-label">Module</div>
+                                <div class="module-status"></div>
+                                <div class="module-count"><?php echo $setup_status['events'] ?? 0; ?></div>
                             </div>
                         </div>
                         <div class="module-title">Events</div>
                         <div class="module-description">Manage gymnastics competitions, tournaments and scoring events</div>
+                        <?php if (isset($setup_status['events'])): ?>
+                            <?php if ($setup_status['events'] == 0 && $setup_status['athletes'] > 0 && $setup_status['judges'] > 0): ?>
+                                <div class="module-hint ready">Ready</div>
+                            <?php elseif ($setup_status['events'] > 0): ?>
+                                <div class="module-hint completed">Active</div>
+                            <?php elseif ($setup_status['athletes'] == 0 || $setup_status['judges'] == 0): ?>
+                                <div class="module-hint">Need Setup</div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </a>
 
                     <a href="admin/judges.php" class="module-card judges-module">
                         <div class="module-header">
                             <div class="module-icon">👨‍⚖️</div>
                             <div class="module-meta">
-                                <div class="module-label">Module</div>
+                                <div class="module-status"></div>
+                                <div class="module-count"><?php echo $setup_status['judges'] ?? 0; ?></div>
                             </div>
                         </div>
                         <div class="module-title">Judges</div>
                         <div class="module-description">Register judges and assign them to events and apparatus</div>
+                        <?php if (isset($setup_status['judges'])): ?>
+                            <?php if ($setup_status['judges'] == 0): ?>
+                                <div class="module-hint">Step 4</div>
+                            <?php else: ?>
+                                <div class="module-hint completed">Ready</div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </a>
 
                     <a href="admin/athletes.php" class="module-card athletes-module">
                         <div class="module-header">
                             <div class="module-icon">🤸‍♂️</div>
                             <div class="module-meta">
-                                <div class="module-label">Module</div>
+                                <div class="module-status"></div>
+                                <div class="module-count"><?php echo $setup_status['athletes'] ?? 0; ?></div>
                             </div>
                         </div>
                         <div class="module-title">Athletes</div>
                         <div class="module-description">Manage gymnasts, teams and competition registrations</div>
+                        <?php if (isset($setup_status['athletes'])): ?>
+                            <?php if ($setup_status['athletes'] == 0 && $setup_status['teams'] > 0): ?>
+                                <div class="module-hint ready">Step 3</div>
+                            <?php elseif ($setup_status['athletes'] > 0): ?>
+                                <div class="module-hint completed">Ready</div>
+                            <?php elseif ($setup_status['teams'] == 0): ?>
+                                <div class="module-hint">Need Teams</div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </a>
+
+                    <a href="admin/teams.php" class="module-card orgs-module">
+                        <div class="module-header">
+                            <div class="module-icon">👥</div>
+                            <div class="module-meta">
+                                <div class="module-status"></div>
+                                <div class="module-count"><?php echo $setup_status['teams'] ?? 0; ?></div>
+                            </div>
+                        </div>
+                        <div class="module-title">Teams</div>
+                        <div class="module-description">Organize athletes into teams for competitions</div>
+                        <?php if (isset($setup_status['teams'])): ?>
+                            <?php if ($setup_status['teams'] == 0): ?>
+                                <div class="module-hint ready">Step 2</div>
+                            <?php else: ?>
+                                <div class="module-hint completed">Ready</div>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                    </a>
+
+                    <a href="admin/organizations.php" class="module-card reports-module">
+                        <div class="module-header">
+                            <div class="module-icon">🏢</div>
+                            <div class="module-meta">
+                                <div class="module-status"></div>
+                                <div class="module-count"><?php echo $setup_status['organizations'] ?? 0; ?></div>
+                            </div>
+                        </div>
+                        <div class="module-title">Organizations</div>
+                        <div class="module-description">Group teams under clubs, schools, or academies</div>
+                        <?php if (isset($setup_status['organizations'])): ?>
+                            <?php if ($setup_status['organizations'] == 0): ?>
+                                <div class="module-hint ready">Step 1</div>
+                            <?php else: ?>
+                                <div class="module-hint completed">Ready</div>
+                            <?php endif; ?>
+                        <?php endif; ?>
                     </a>
 
                     <a href="admin/reports.php" class="module-card reports-module">
                         <div class="module-header">
                             <div class="module-icon">📈</div>
                             <div class="module-meta">
-                                <div class="module-label">Module</div>
+                                <div class="module-status"></div>
                             </div>
                         </div>
                         <div class="module-title">Reports</div>
@@ -707,7 +979,7 @@ try {
                         <div class="module-header">
                             <div class="module-icon">📝</div>
                             <div class="module-meta">
-                                <div class="module-label">Module</div>
+                                <div class="module-status"></div>
                             </div>
                         </div>
                         <div class="module-title">Scoring</div>
@@ -719,15 +991,13 @@ try {
                         <div class="module-header">
                             <div class="module-icon">🏅</div>
                             <div class="module-meta">
-                                <div class="module-label">Module</div>
+                                <div class="module-status"></div>
                             </div>
                         </div>
                         <div class="module-title">Live Scores</div>
                         <div class="module-description">View real-time competition results and rankings</div>
                     </a>
                 </div>
-
-               
             </div>
         </main>
     </div>
@@ -747,6 +1017,18 @@ try {
                 if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
                     sidebar.classList.remove('open');
                 }
+            }
+        });
+
+        // Animate progress bar
+        document.addEventListener('DOMContentLoaded', function() {
+            const progressBar = document.querySelector('.setup-progress-fill');
+            if (progressBar) {
+                const targetWidth = progressBar.style.width;
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    progressBar.style.width = targetWidth;
+                }, 500);
             }
         });
 
