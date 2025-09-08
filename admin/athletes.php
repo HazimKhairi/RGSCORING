@@ -148,13 +148,20 @@ if (isset($_GET['edit'])) {
 
 // Common categories for dropdown
 $categories = ['Junior', 'Senior', 'Elite', 'Youth', 'Masters', 'Recreational'];
+
+// Calculate statistics
+$total_athletes = count($gymnasts);
+$total_teams = count($teams);
+$total_scores = array_sum(array_column($gymnasts, 'total_scores'));
+$total_categories = count(array_unique(array_column($gymnasts, 'gymnast_category')));
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Athlete Management - Gymnastics Scoring</title>
+    <title>Athletes Management - Gymnastics Scoring System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -163,69 +170,305 @@ $categories = ['Junior', 'Senior', 'Elite', 'Youth', 'Masters', 'Recreational'];
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            font-family: 'Poppins', sans-serif;
+            background: #F8FAFC;
+            color: #334155;
+            overflow-x: hidden;
         }
 
-        .header {
-            background: #27ae60;
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
+        .dashboard-container {
             display: flex;
-            justify-content: space-between;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #E2E8F0;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
             align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1E293B;
+        }
+
+        .nav-menu {
             padding: 0 1rem;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
-        }
-
-        .tabs {
+        .nav-item {
             display: flex;
-            background: white;
-            border-radius: 15px 15px 0 0;
-            overflow: hidden;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            margin-bottom: 0;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 10px;
+            color: #64748B;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
 
-        .tab {
+        .nav-item:hover {
+            background: #F1F5F9;
+            color: #334155;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+        }
+
+        .nav-item.active .nav-icon {
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #64748B;
+        }
+
+        .nav-text {
+            font-size: 0.9rem;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 1rem;
+            right: 1rem;
+        }
+
+        .sign-out-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+            color: #EF4444;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid #FEE2E2;
+            background: #FEF2F2;
+        }
+
+        .sign-out-btn:hover {
+            background: #FEE2E2;
+            border-color: #EF4444;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            background: white;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 0.25rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748B;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-separator {
+            color: #CBD5E1;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .header-btn {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            cursor: pointer;
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .header-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
+        }
+
+        .header-btn.secondary {
+            background: #64748B;
+        }
+
+        .header-btn.secondary:hover {
+            box-shadow: 0 8px 25px rgba(100, 116, 139, 0.4);
+        }
+
+        .content-area {
+            padding: 2rem;
+        }
+
+        /* Statistics Cards */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #E2E8F0;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.athletes { background: linear-gradient(135deg, #10B981, #059669); }
+        .stat-icon.teams { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+        .stat-icon.scores { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .stat-icon.categories { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 0.25rem;
+        }
+
+        .stat-label {
+            color: #64748B;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        /* Tabs */
+        .tabs-container {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            overflow: hidden;
+        }
+
+        .tabs-header {
+            display: flex;
+            background: #F8FAFC;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        .tab-button {
             flex: 1;
             padding: 1rem 2rem;
-            cursor: pointer;
-            background: #f8f9fa;
+            background: none;
             border: none;
-            font-size: 1rem;
+            cursor: pointer;
             font-weight: 600;
-            transition: all 0.3s ease;
-            color: #666;
+            font-size: 0.9rem;
+            color: #64748B;
+            transition: all 0.2s ease;
+            position: relative;
         }
 
-        .tab.active {
-            background: #27ae60;
-            color: white;
+        .tab-button.active {
+            color: #8B5CF6;
+            background: white;
         }
 
-        .tab:hover {
-            background: #219a52;
-            color: white;
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
         }
 
         .tab-content {
             display: none;
-            background: white;
-            border-radius: 0 0 15px 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
             padding: 2rem;
         }
 
@@ -233,41 +476,66 @@ $categories = ['Junior', 'Senior', 'Elite', 'Youth', 'Masters', 'Recreational'];
             display: block;
         }
 
-        .btn {
-            padding: 0.8rem 1.5rem;
-            border: none;
-            border-radius: 8px;
-            font-weight: 600;
-            cursor: pointer;
-            text-decoration: none;
-            display: inline-block;
-            text-align: center;
-            transition: all 0.3s ease;
+        /* Search Bar */
+        .search-section {
+            margin-bottom: 2rem;
+        }
+
+        .search-bar {
+            position: relative;
+            max-width: 400px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 3rem;
+            border: 2px solid #E2E8F0;
+            border-radius: 10px;
             font-size: 0.9rem;
-            margin: 0.25rem;
+            transition: all 0.2s ease;
         }
 
-        .btn-primary { background: #3498db; color: white; }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-warning { background: #f39c12; color: white; }
-        .btn-danger { background: #e74c3c; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .search-input:focus {
+            outline: none;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
         }
 
-        .btn-small {
-            padding: 0.5rem 1rem;
-            font-size: 0.8rem;
+        .search-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #64748B;
+        }
+
+        /* Quick Add Form */
+        .quick-add-section {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .quick-add-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .quick-add-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1E293B;
         }
 
         .form-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
-            margin-bottom: 2rem;
+            gap: 1rem;
+            margin-bottom: 1rem;
         }
 
         .form-group {
@@ -275,460 +543,729 @@ $categories = ['Junior', 'Senior', 'Elite', 'Youth', 'Masters', 'Recreational'];
             flex-direction: column;
         }
 
-        .form-group label {
-            font-weight: 600;
+        .form-label {
+            font-weight: 500;
+            color: #374151;
             margin-bottom: 0.5rem;
-            color: #555;
+            font-size: 0.875rem;
         }
 
-        .form-group input,
-        .form-group select {
-            padding: 0.8rem;
-            border: 2px solid #e1e8ed;
+        .form-input {
+            padding: 0.75rem;
+            border: 2px solid #E5E7EB;
             border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
+            font-size: 0.9rem;
+            transition: all 0.2s ease;
         }
 
-        .form-group input:focus,
-        .form-group select:focus {
+        .form-input:focus {
             outline: none;
-            border-color: #27ae60;
+            border-color: #8B5CF6;
+            box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
         }
 
-        .table-container {
-            overflow-x: auto;
-            margin-top: 2rem;
+        /* Athletes/Teams Grid */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 1.5rem;
         }
 
-        .table {
-            width: 100%;
-            border-collapse: collapse;
+        .item-card {
             background: white;
+            border: 1px solid #E2E8F0;
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
         }
 
-        .table th,
-        .table td {
-            padding: 1rem;
-            text-align: left;
-            border-bottom: 1px solid #e1e8ed;
+        .item-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            border-color: #8B5CF6;
         }
 
-        .table th {
-            background: #f8f9fa;
-            font-weight: 600;
-            color: #2c3e50;
-            position: sticky;
-            top: 0;
-        }
-
-        .table tr:hover {
-            background: #f8f9fa;
-        }
-
-        .category-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
-            text-transform: uppercase;
-            background: #3498db;
-            color: white;
-        }
-
-        .score-count {
-            background: #f39c12;
-            color: white;
-            padding: 0.2rem 0.6rem;
-            border-radius: 15px;
-            font-size: 0.8rem;
-            font-weight: bold;
-        }
-
-        .action-buttons {
+        .item-header {
             display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .alert {
-            padding: 1rem;
-            border-radius: 8px;
+            justify-content: space-between;
+            align-items: flex-start;
             margin-bottom: 1rem;
         }
 
+        .item-info h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 0.25rem;
+        }
+
+        .item-meta {
+            color: #64748B;
+            font-size: 0.875rem;
+            margin-bottom: 0.125rem;
+        }
+
+        .category-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            background: #8B5CF6;
+            color: white;
+        }
+
+        .score-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            background: #10B981;
+            color: white;
+        }
+
+        .item-actions {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            margin-top: 1rem;
+        }
+
+        .btn {
+            padding: 0.5rem 1rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+            transition: all 0.2s ease;
+            font-size: 0.8rem;
+        }
+
+        .btn-primary {
+            background: #3B82F6;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #2563EB;
+            transform: translateY(-1px);
+        }
+
+        .btn-warning {
+            background: #F59E0B;
+            color: white;
+        }
+
+        .btn-warning:hover {
+            background: #D97706;
+            transform: translateY(-1px);
+        }
+
+        .btn-danger {
+            background: #EF4444;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #DC2626;
+            transform: translateY(-1px);
+        }
+
+        .btn-success {
+            background: #10B981;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+            transform: translateY(-1px);
+        }
+
+        /* Alerts */
+        .alert {
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
         .alert-success {
-            background: #d4edda;
-            border: 1px solid #c3e6cb;
-            color: #155724;
+            background: #D1FAE5;
+            color: #065F46;
+            border: 1px solid #A7F3D0;
         }
 
         .alert-error {
-            background: #f8d7da;
-            border: 1px solid #f5c6cb;
-            color: #721c24;
+            background: #FEE2E2;
+            color: #991B1B;
+            border: 1px solid #FECACA;
         }
 
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
+        /* Modal */
+        .modal {
+            position: fixed;
+            z-index: 2000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            display: none;
+            align-items: center;
+            justify-content: center;
         }
 
-        .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            text-align: center;
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
-        .stat-number {
-            font-size: 2rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
-        }
-
-        .stat-label {
-            font-size: 0.9rem;
-            opacity: 0.9;
-        }
-
-        .search-bar {
+        .modal-header {
             margin-bottom: 1.5rem;
         }
 
-        .search-bar input {
-            width: 100%;
-            max-width: 400px;
-            padding: 1rem;
-            border: 2px solid #e1e8ed;
-            border-radius: 25px;
-            font-size: 1rem;
-            background: white;
+        .modal-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: #1E293B;
         }
 
-        .search-bar input:focus {
-            outline: none;
-            border-color: #27ae60;
-            box-shadow: 0 0 0 3px rgba(39, 174, 96, 0.1);
+        .modal-actions {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+            margin-top: 1.5rem;
+        }
+
+        .no-items {
+            text-align: center;
+            padding: 3rem 2rem;
+            color: #64748B;
+        }
+
+        .no-items h3 {
+            color: #1E293B;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .items-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
-            .tabs {
+            .top-header {
+                padding: 1rem;
                 flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
             }
-            
-            .form-grid {
-                grid-template-columns: 1fr;
+
+            .content-area {
+                padding: 1rem;
             }
-            
-            .action-buttons {
-                flex-direction: column;
-            }
-            
-            .table th,
-            .table td {
-                padding: 0.5rem;
-                font-size: 0.9rem;
-            }
-            
+
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
+
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs-header {
+                flex-direction: column;
+            }
+
+            .header-actions {
+                flex-direction: column;
+            }
         }
 
-        .quick-add-form {
-            background: #f8f9fa;
-            padding: 1.5rem;
-            border-radius: 10px;
-            margin-bottom: 2rem;
-            border-left: 4px solid #27ae60;
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748B;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .mobile-menu-btn {
+                display: block;
+            }
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <h1>Athlete Management</h1>
-            <div>
-                <a href="events.php" class="btn btn-secondary">Events</a>
-                <a href="../dashboard.php" class="btn btn-primary">Dashboard</a>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🤸</div>
+                    <div class="logo-text">GymnasticsScore</div>
+                </div>
             </div>
-        </div>
-    </header>
 
-    <div class="container">
-        <?php if ($message): ?>
-            <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
-        <?php endif; ?>
+            <nav class="nav-menu">
+                <a href="../dashboard.php" class="nav-item">
+                    <div class="nav-icon">📊</div>
+                    <div class="nav-text">Dashboard</div>
+                </a>
 
-        <?php if ($error): ?>
-            <div class="alert alert-error"><?php echo htmlspecialchars($error); ?></div>
-        <?php endif; ?>
+                <a href="events.php" class="nav-item">
+                    <div class="nav-icon">🏆</div>
+                    <div class="nav-text">Events Module</div>
+                </a>
 
-        <!-- Statistics -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number"><?php echo count($gymnasts); ?></div>
-                <div class="stat-label">Total Athletes</div>
+                <a href="judges.php" class="nav-item">
+                    <div class="nav-icon">👨‍⚖️</div>
+                    <div class="nav-text">Judges Module</div>
+                </a>
+
+                <a href="athletes.php" class="nav-item active">
+                    <div class="nav-icon">🤸‍♂️</div>
+                    <div class="nav-text">Athletes Module</div>
+                </a>
+
+                <a href="teams.php" class="nav-item">
+                    <div class="nav-icon">👥</div>
+                    <div class="nav-text">Teams Module</div>
+                </a>
+
+                <a href="organizations.php" class="nav-item">
+                    <div class="nav-icon">🏢</div>
+                    <div class="nav-text">Organizations</div>
+                </a>
+
+                <a href="reports.php" class="nav-item">
+                    <div class="nav-icon">📈</div>
+                    <div class="nav-text">Reports Module</div>
+                </a>
+
+                <a href="../leaderboard.php" class="nav-item">
+                    <div class="nav-icon">🏅</div>
+                    <div class="nav-text">Live Scores</div>
+                </a>
+
+                <?php if ($_SESSION['role'] == 'super_admin'): ?>
+                <a href="system-management.php" class="nav-item">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-text">Administration</div>
+                </a>
+                <?php endif; ?>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../logout.php" class="sign-out-btn">
+                    <div class="nav-icon">🚪</div>
+                    <div class="nav-text">Sign Out</div>
+                </a>
             </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo count($teams); ?></div>
-                <div class="stat-label">Total Teams</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo array_sum(array_column($gymnasts, 'total_scores')); ?></div>
-                <div class="stat-label">Total Scores</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo count(array_unique(array_column($gymnasts, 'gymnast_category'))); ?></div>
-                <div class="stat-label">Categories</div>
-            </div>
-        </div>
+        </aside>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab active" onclick="switchTab('athletes')">Athletes</button>
-            <button class="tab" onclick="switchTab('teams')">Teams</button>
-        </div>
-
-        <!-- Athletes Tab -->
-        <div id="athletes" class="tab-content active">
-            <!-- Quick Add Athlete Form -->
-            <div class="quick-add-form">
-                <h3 style="margin-bottom: 1rem;">Quick Add Athlete</h3>
-                <form method="POST">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="gymnast_name">Athlete Name *</label>
-                            <input type="text" id="gymnast_name" name="gymnast_name" required 
-                                   value="<?php echo $edit_athlete ? htmlspecialchars($edit_athlete['gymnast_name']) : ''; ?>">
-                        </div>
-
-                        <div class="form-group">
-                            <label for="gymnast_category">Category *</label>
-                            <select id="gymnast_category" name="gymnast_category" required>
-                                <option value="">Select category...</option>
-                                <?php foreach ($categories as $category): ?>
-                                    <option value="<?php echo $category; ?>" 
-                                            <?php echo ($edit_athlete && $edit_athlete['gymnast_category'] == $category) ? 'selected' : ''; ?>>
-                                        <?php echo $category; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="form-group">
-                            <label for="team_id">Team *</label>
-                            <select id="team_id" name="team_id" required>
-                                <option value="">Select team...</option>
-                                <?php foreach ($teams as $team): ?>
-                                    <option value="<?php echo $team['team_id']; ?>" 
-                                            <?php echo ($edit_athlete && $edit_athlete['team_id'] == $team['team_id']) ? 'selected' : ''; ?>>
-                                        <?php echo htmlspecialchars($team['team_name']); ?>
-                                        <?php if ($team['org_name']): ?>
-                                            (<?php echo htmlspecialchars($team['org_name']); ?>)
-                                        <?php endif; ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
-                        </div>
-
-                        <div class="form-group" style="display: flex; align-items: end;">
-                            <?php if ($edit_athlete): ?>
-                                <input type="hidden" name="gymnast_id" value="<?php echo $edit_athlete['gymnast_id']; ?>">
-                                <button type="submit" name="update_athlete" class="btn btn-warning">Update Athlete</button>
-                                <a href="athletes.php" class="btn btn-secondary">Cancel</a>
-                            <?php else: ?>
-                                <button type="submit" name="create_athlete" class="btn btn-success">Add Athlete</button>
-                            <?php endif; ?>
-                        </div>
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <h1>Athletes Management</h1>
+                    <div class="breadcrumb">
+                        <span>🏠 Home</span>
+                        <span class="breadcrumb-separator">›</span>
+                        <span>Athletes</span>
                     </div>
-                </form>
-            </div>
+                </div>
+                <div class="header-actions">
+                    <button class="header-btn" onclick="openModal('athleteModal')">
+                        🤸‍♂️ New Athlete
+                    </button>
+                    <button class="header-btn secondary" onclick="openModal('teamModal')">
+                        👥 New Team
+                    </button>
+                </div>
+            </header>
 
-            <!-- Search -->
-            <div class="search-bar">
-                <input type="text" id="athleteSearch" placeholder="Search athletes by name, team, or category..." 
-                       onkeyup="filterTable('athletesTable', this.value)">
-            </div>
+            <div class="content-area">
+                <?php if ($message): ?>
+                    <div class="alert alert-success">✅ <?php echo htmlspecialchars($message); ?></div>
+                <?php endif; ?>
 
-            <!-- Athletes Table -->
-            <div class="table-container">
-                <table class="table" id="athletesTable">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Category</th>
-                            <th>Team</th>
-                            <th>Organization</th>
-                            <th>Scores</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($gymnasts as $gymnast): ?>
-                        <tr>
-                            <td><strong><?php echo htmlspecialchars($gymnast['gymnast_name']); ?></strong></td>
-                            <td>
-                                <span class="category-badge">
-                                    <?php echo htmlspecialchars($gymnast['gymnast_category']); ?>
-                                </span>
-                            </td>
-                            <td><?php echo htmlspecialchars($gymnast['team_name']); ?></td>
-                            <td><?php echo htmlspecialchars($gymnast['org_name'] ?? 'None'); ?></td>
-                            <td>
-                                <span class="score-count"><?php echo $gymnast['total_scores']; ?></span>
-                            </td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="?edit=<?php echo $gymnast['gymnast_id']; ?>" class="btn btn-warning btn-small">Edit</a>
+                <?php if ($error): ?>
+                    <div class="alert alert-error">❌ <?php echo htmlspecialchars($error); ?></div>
+                <?php endif; ?>
+
+                <!-- Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon athletes">🤸‍♂️</div>
+                        </div>
+                        <div class="stat-number"><?php echo $total_athletes; ?></div>
+                        <div class="stat-label">Total Athletes</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon teams">👥</div>
+                        </div>
+                        <div class="stat-number"><?php echo $total_teams; ?></div>
+                        <div class="stat-label">Total Teams</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon scores">📝</div>
+                        </div>
+                        <div class="stat-number"><?php echo $total_scores; ?></div>
+                        <div class="stat-label">Total Scores</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon categories">🏷️</div>
+                        </div>
+                        <div class="stat-number"><?php echo $total_categories; ?></div>
+                        <div class="stat-label">Categories</div>
+                    </div>
+                </div>
+
+                <!-- Tabs Container -->
+                <div class="tabs-container">
+                    <div class="tabs-header">
+                        <button class="tab-button active" onclick="switchTab('athletes')">
+                            Athletes (<?php echo count($gymnasts); ?>)
+                        </button>
+                        <button class="tab-button" onclick="switchTab('teams')">
+                            Teams (<?php echo count($teams); ?>)
+                        </button>
+                    </div>
+
+                    <!-- Athletes Tab -->
+                    <div id="athletes" class="tab-content active">
+                        <?php if ($edit_athlete): ?>
+                        <div class="quick-add-section">
+                            <div class="quick-add-header">
+                                <h3 class="quick-add-title">Edit Athlete</h3>
+                            </div>
+                            <form method="POST">
+                                <input type="hidden" name="gymnast_id" value="<?php echo $edit_athlete['gymnast_id']; ?>">
+                                <div class="form-grid">
+                                    <div class="form-group">
+                                        <label class="form-label">Athlete Name *</label>
+                                        <input type="text" name="gymnast_name" class="form-input" required 
+                                               value="<?php echo htmlspecialchars($edit_athlete['gymnast_name']); ?>">
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Category *</label>
+                                        <select name="gymnast_category" class="form-input" required>
+                                            <option value="">Select category...</option>
+                                            <?php foreach ($categories as $category): ?>
+                                                <option value="<?php echo $category; ?>" 
+                                                        <?php echo ($edit_athlete['gymnast_category'] == $category) ? 'selected' : ''; ?>>
+                                                    <?php echo $category; ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label class="form-label">Team *</label>
+                                        <select name="team_id" class="form-input" required>
+                                            <option value="">Select team...</option>
+                                            <?php foreach ($teams as $team): ?>
+                                                <option value="<?php echo $team['team_id']; ?>" 
+                                                        <?php echo ($edit_athlete['team_id'] == $team['team_id']) ? 'selected' : ''; ?>>
+                                                    <?php echo htmlspecialchars($team['team_name']); ?>
+                                                    <?php if ($team['org_name']): ?>
+                                                        (<?php echo htmlspecialchars($team['org_name']); ?>)
+                                                    <?php endif; ?>
+                                                </option>
+                                            <?php endforeach; ?>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="modal-actions">
+                                    <button type="submit" name="update_athlete" class="btn btn-primary">Update Athlete</button>
+                                    <a href="athletes.php" class="btn btn-secondary">Cancel</a>
+                                </div>
+                            </form>
+                        </div>
+                        <?php endif; ?>
+
+                        <div class="search-section">
+                            <div class="search-bar">
+                                <div class="search-icon">🔍</div>
+                                <input type="text" class="search-input" placeholder="Search athletes..." id="athleteSearch" onkeyup="filterItems('athletesGrid', this.value)">
+                            </div>
+                        </div>
+
+                        <?php if (!empty($gymnasts)): ?>
+                        <div class="items-grid" id="athletesGrid">
+                            <?php foreach ($gymnasts as $gymnast): ?>
+                            <div class="item-card" data-search="<?php echo strtolower($gymnast['gymnast_name'] . ' ' . $gymnast['team_name'] . ' ' . $gymnast['gymnast_category']); ?>">
+                                <div class="item-header">
+                                    <div class="item-info">
+                                        <h3><?php echo htmlspecialchars($gymnast['gymnast_name']); ?></h3>
+                                        <div class="item-meta">👥 <?php echo htmlspecialchars($gymnast['team_name']); ?></div>
+                                        <?php if ($gymnast['org_name']): ?>
+                                            <div class="item-meta">🏢 <?php echo htmlspecialchars($gymnast['org_name']); ?></div>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div>
+                                        <span class="category-badge"><?php echo htmlspecialchars($gymnast['gymnast_category']); ?></span>
+                                    </div>
+                                </div>
+
+                                <div style="margin: 1rem 0;">
+                                    <span class="score-badge"><?php echo $gymnast['total_scores']; ?> scores</span>
+                                </div>
+
+                                <div class="item-actions">
+                                    <a href="?edit=<?php echo $gymnast['gymnast_id']; ?>" class="btn btn-warning">✏️ Edit</a>
                                     <?php if ($gymnast['total_scores'] == 0): ?>
-                                        <button onclick="deleteAthlete(<?php echo $gymnast['gymnast_id']; ?>)" 
-                                                class="btn btn-danger btn-small">Delete</button>
+                                        <button onclick="deleteAthlete(<?php echo $gymnast['gymnast_id']; ?>)" class="btn btn-danger">🗑️ Delete</button>
                                     <?php endif; ?>
                                 </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Teams Tab -->
-        <div id="teams" class="tab-content">
-            <!-- Quick Add Team Form -->
-            <div class="quick-add-form">
-                <h3 style="margin-bottom: 1rem;">Create New Team</h3>
-                <form method="POST">
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label for="team_name">Team Name *</label>
-                            <input type="text" id="team_name" name="team_name" required>
+                            </div>
+                            <?php endforeach; ?>
                         </div>
-
-                        <div class="form-group">
-                            <label for="organization_id">Organization</label>
-                            <select id="organization_id" name="organization_id">
-                                <option value="">No organization</option>
-                                <?php foreach ($organizations as $org): ?>
-                                    <option value="<?php echo $org['org_id']; ?>">
-                                        <?php echo htmlspecialchars($org['org_name']); ?>
-                                    </option>
-                                <?php endforeach; ?>
-                            </select>
+                        <?php else: ?>
+                        <div class="no-items">
+                            <h3>No athletes found</h3>
+                            <p>Start by adding your first athlete to the system.</p>
                         </div>
-
-                        <div class="form-group" style="display: flex; align-items: end;">
-                            <button type="submit" name="create_team" class="btn btn-success">Create Team</button>
-                        </div>
+                        <?php endif; ?>
                     </div>
-                </form>
-            </div>
 
-            <!-- Search -->
-            <div class="search-bar">
-                <input type="text" id="teamSearch" placeholder="Search teams by name or organization..." 
-                       onkeyup="filterTable('teamsTable', this.value)">
-            </div>
+                    <!-- Teams Tab -->
+                    <div id="teams" class="tab-content">
+                        <div class="search-section">
+                            <div class="search-bar">
+                                <div class="search-icon">🔍</div>
+                                <input type="text" class="search-input" placeholder="Search teams..." id="teamSearch" onkeyup="filterItems('teamsGrid', this.value)">
+                            </div>
+                        </div>
 
-            <!-- Teams Table -->
-            <div class="table-container">
-                <table class="table" id="teamsTable">
-                    <thead>
-                        <tr>
-                            <th>Team Name</th>
-                            <th>Organization</th>
-                            <th>Athletes</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <?php foreach ($teams as $team): ?>
-                        <tr>
-                            <td><strong><?php echo htmlspecialchars($team['team_name']); ?></strong></td>
-                            <td><?php echo htmlspecialchars($team['org_name'] ?? 'Independent'); ?></td>
-                            <td>
-                                <span class="score-count"><?php echo $team['athlete_count']; ?> athletes</span>
-                            </td>
-                            <td>
-                                <div class="action-buttons">
-                                    <a href="#" class="btn btn-primary btn-small">View Athletes</a>
-                                    <a href="#" class="btn btn-warning btn-small">Edit</a>
+                        <?php if (!empty($teams)): ?>
+                        <div class="items-grid" id="teamsGrid">
+                            <?php foreach ($teams as $team): ?>
+                            <div class="item-card" data-search="<?php echo strtolower($team['team_name'] . ' ' . ($team['org_name'] ?? '')); ?>">
+                                <div class="item-header">
+                                    <div class="item-info">
+                                        <h3><?php echo htmlspecialchars($team['team_name']); ?></h3>
+                                        <div class="item-meta">🏢 <?php echo htmlspecialchars($team['org_name'] ?? 'Independent'); ?></div>
+                                    </div>
                                 </div>
-                            </td>
-                        </tr>
-                        <?php endforeach; ?>
-                    </tbody>
-                </table>
+
+                                <div style="margin: 1rem 0;">
+                                    <span class="score-badge"><?php echo $team['athlete_count']; ?> athletes</span>
+                                </div>
+
+                                <div class="item-actions">
+                                    <a href="#" class="btn btn-primary">👁️ View Athletes</a>
+                                    <a href="#" class="btn btn-warning">✏️ Edit</a>
+                                </div>
+                            </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php else: ?>
+                        <div class="no-items">
+                            <h3>No teams found</h3>
+                            <p>Create your first team to organize athletes.</p>
+                        </div>
+                        <?php endif; ?>
+                    </div>
+                </div>
             </div>
+        </main>
+    </div>
+
+    <!-- Create Athlete Modal -->
+    <div id="athleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create New Athlete</h3>
+            </div>
+            <form method="POST">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Athlete Name *</label>
+                        <input type="text" name="gymnast_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Category *</label>
+                        <select name="gymnast_category" class="form-input" required>
+                            <option value="">Select category...</option>
+                            <?php foreach ($categories as $category): ?>
+                                <option value="<?php echo $category; ?>"><?php echo $category; ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Team *</label>
+                        <select name="team_id" class="form-input" required>
+                            <option value="">Select team...</option>
+                            <?php foreach ($teams as $team): ?>
+                                <option value="<?php echo $team['team_id']; ?>">
+                                    <?php echo htmlspecialchars($team['team_name']); ?>
+                                    <?php if ($team['org_name']): ?>
+                                        (<?php echo htmlspecialchars($team['org_name']); ?>)
+                                    <?php endif; ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal('athleteModal')" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" name="create_athlete" class="btn btn-success">Create Athlete</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Team Modal -->
+    <div id="teamModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Create New Team</h3>
+            </div>
+            <form method="POST">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label class="form-label">Team Name *</label>
+                        <input type="text" name="team_name" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Organization</label>
+                        <select name="organization_id" class="form-input">
+                            <option value="">Independent Team</option>
+                            <?php foreach ($organizations as $org): ?>
+                                <option value="<?php echo $org['org_id']; ?>">
+                                    <?php echo htmlspecialchars($org['org_name']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal('teamModal')" class="btn btn-secondary">Cancel</button>
+                    <button type="submit" name="create_team" class="btn btn-success">Create Team</button>
+                </div>
+            </form>
         </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
-    <div id="deleteModal" style="display: none; position: fixed; z-index: 1000; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5);">
-        <div style="background: white; margin: 15% auto; padding: 2rem; border-radius: 15px; width: 90%; max-width: 400px;">
-            <h3>Confirm Delete</h3>
-            <p>Are you sure you want to delete this athlete?</p>
+    <div id="deleteModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Confirm Delete</h3>
+            </div>
+            <p>Are you sure you want to delete this athlete? This action cannot be undone.</p>
             <form method="POST" id="deleteForm">
                 <input type="hidden" name="gymnast_id" id="deleteAthleteId">
-                <div style="margin-top: 2rem; display: flex; gap: 1rem;">
+                <div class="modal-actions">
+                    <button type="button" onclick="closeModal('deleteModal')" class="btn btn-secondary">Cancel</button>
                     <button type="submit" name="delete_athlete" class="btn btn-danger">Delete</button>
-                    <button type="button" onclick="closeDeleteModal()" class="btn btn-secondary">Cancel</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        function switchTab(tabName) {
-            // Hide all tab contents
-            const tabContents = document.querySelectorAll('.tab-content');
-            tabContents.forEach(content => content.classList.remove('active'));
-            
-            // Remove active class from all tabs
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach(tab => tab.classList.remove('active'));
-            
-            // Show selected tab content
-            document.getElementById(tabName).classList.add('active');
-            
-            // Add active class to clicked tab
-            event.target.classList.add('active');
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
         }
 
-        function filterTable(tableId, searchValue) {
-            const table = document.getElementById(tableId);
-            const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+        function switchTab(tabName) {
+            // Remove active class from all tab buttons and contents
+            document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
             
-            for (let i = 0; i < rows.length; i++) {
-                const row = rows[i];
-                const text = row.textContent.toLowerCase();
-                
-                if (text.includes(searchValue.toLowerCase())) {
-                    row.style.display = '';
+            // Add active class to clicked tab button and corresponding content
+            event.target.classList.add('active');
+            document.getElementById(tabName).classList.add('active');
+        }
+
+        function openModal(modalId) {
+            document.getElementById(modalId).style.display = 'flex';
+        }
+
+        function closeModal(modalId) {
+            document.getElementById(modalId).style.display = 'none';
+        }
+
+        function filterItems(gridId, searchValue) {
+            const grid = document.getElementById(gridId);
+            const items = grid.querySelectorAll('.item-card');
+            const searchTerm = searchValue.toLowerCase();
+            
+            items.forEach(item => {
+                const searchData = item.getAttribute('data-search');
+                if (searchData.includes(searchTerm)) {
+                    item.style.display = 'block';
                 } else {
-                    row.style.display = 'none';
+                    item.style.display = 'none';
                 }
-            }
+            });
         }
 
         function deleteAthlete(athleteId) {
             document.getElementById('deleteAthleteId').value = athleteId;
-            document.getElementById('deleteModal').style.display = 'block';
+            openModal('deleteModal');
         }
 
-        function closeDeleteModal() {
-            document.getElementById('deleteModal').style.display = 'none';
-        }
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 1024) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
 
-        // Auto-open athletes tab if editing
-        <?php if ($edit_athlete): ?>
-        switchTab('athletes');
-        <?php endif; ?>
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                if (event.target == modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
     </script>
 </body>
 </html>
