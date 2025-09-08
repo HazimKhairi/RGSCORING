@@ -154,7 +154,8 @@ if ($event_id) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Reports & Analytics - Gymnastics Scoring</title>
+    <title>Reports & Analytics - Gymnastics Scoring System</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -163,133 +164,383 @@ if ($event_id) {
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: #f8f9fa;
-            color: #333;
+            font-family: 'Poppins', sans-serif;
+            background: #F8FAFC;
+            color: #334155;
+            overflow-x: hidden;
         }
 
-        .header {
-            background: #34495e;
-            color: white;
-            padding: 1rem 0;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-
-        .header-content {
-            max-width: 1400px;
-            margin: 0 auto;
+        .dashboard-container {
             display: flex;
-            justify-content: space-between;
+            min-height: 100vh;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: white;
+            border-right: 1px solid #E2E8F0;
+            padding: 2rem 0;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .sidebar-header {
+            padding: 0 2rem 2rem;
+            border-bottom: 1px solid #E2E8F0;
+            margin-bottom: 2rem;
+        }
+
+        .logo {
+            display: flex;
             align-items: center;
+            gap: 0.75rem;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+        }
+
+        .logo-text {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #1E293B;
+        }
+
+        .nav-menu {
             padding: 0 1rem;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-            padding: 2rem 1rem;
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            margin-bottom: 0.25rem;
+            border-radius: 10px;
+            color: #64748B;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            cursor: pointer;
         }
 
-        .btn {
-            padding: 0.8rem 1.5rem;
+        .nav-item:hover {
+            background: #F1F5F9;
+            color: #334155;
+        }
+
+        .nav-item.active {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+        }
+
+        .nav-item.active .nav-icon {
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+            color: #64748B;
+        }
+
+        .nav-text {
+            font-size: 0.9rem;
+        }
+
+        .sidebar-footer {
+            position: absolute;
+            bottom: 2rem;
+            left: 1rem;
+            right: 1rem;
+        }
+
+        .sign-out-btn {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.875rem 1rem;
+            border-radius: 10px;
+            color: #EF4444;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            border: 1px solid #FEE2E2;
+            background: #FEF2F2;
+        }
+
+        .sign-out-btn:hover {
+            background: #FEE2E2;
+            border-color: #EF4444;
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            margin-left: 280px;
+            min-height: 100vh;
+        }
+
+        .top-header {
+            background: white;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left h1 {
+            font-size: 1.875rem;
+            font-weight: 600;
+            color: #1E293B;
+            margin-bottom: 0.25rem;
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: #64748B;
+            font-size: 0.875rem;
+        }
+
+        .breadcrumb-separator {
+            color: #CBD5E1;
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .export-btn {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+            padding: 0.75rem 1.5rem;
             border: none;
-            border-radius: 8px;
+            border-radius: 10px;
             font-weight: 600;
             cursor: pointer;
             text-decoration: none;
-            display: inline-block;
-            text-align: center;
             transition: all 0.3s ease;
             font-size: 0.9rem;
-            margin: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
-        .btn-primary { background: #3498db; color: white; }
-        .btn-success { background: #27ae60; color: white; }
-        .btn-secondary { background: #95a5a6; color: white; }
-
-        .btn:hover {
+        .export-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.4);
         }
 
-        .card {
+        .content-area {
+            padding: 2rem;
+        }
+
+        /* Event Selection */
+        .event-selection-section {
             background: white;
-            border-radius: 15px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
             overflow: hidden;
             margin-bottom: 2rem;
         }
 
-        .card-header {
-            background: #34495e;
-            color: white;
-            padding: 1.5rem;
-            font-size: 1.2rem;
-            font-weight: bold;
+        .section-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .card-body {
+        .section-title {
+            font-weight: 600;
+            color: #1E293B;
+            font-size: 1.125rem;
+        }
+
+        .section-content {
             padding: 2rem;
         }
 
-        .event-selector {
+        .events-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 1.5rem;
         }
 
         .event-card {
-            border: 2px solid #e1e8ed;
-            border-radius: 10px;
+            background: #F8FAFC;
+            border: 2px solid #E2E8F0;
+            border-radius: 12px;
             padding: 1.5rem;
-            cursor: pointer;
             transition: all 0.3s ease;
+            cursor: pointer;
             text-decoration: none;
             color: inherit;
         }
 
         .event-card:hover {
-            border-color: #34495e;
-            background: #f8f9fa;
+            border-color: #8B5CF6;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(139, 92, 246, 0.15);
         }
 
         .event-card.selected {
-            border-color: #34495e;
-            background: #34495e;
+            border-color: #8B5CF6;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
             color: white;
         }
 
+        .event-card h3 {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-meta {
+            font-size: 0.875rem;
+            opacity: 0.8;
+            margin-bottom: 0.25rem;
+        }
+
+        .event-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-top: 0.5rem;
+        }
+
+        .status-active {
+            background: #D1FAE5;
+            color: #065F46;
+        }
+
+        .status-upcoming {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+
+        .status-completed {
+            background: #E5E7EB;
+            color: #374151;
+        }
+
+        .event-card.selected .status-active,
+        .event-card.selected .status-upcoming,
+        .event-card.selected .status-completed {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+        }
+
+        /* Statistics Grid */
         .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
             margin-bottom: 2rem;
         }
 
         .stat-card {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 1.5rem;
-            border-radius: 15px;
-            text-align: center;
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid #E2E8F0;
+            transition: all 0.3s ease;
         }
 
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+        }
+
+        .stat-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        .stat-icon.gymnasts { background: linear-gradient(135deg, #10B981, #059669); }
+        .stat-icon.teams { background: linear-gradient(135deg, #3B82F6, #1D4ED8); }
+        .stat-icon.judges { background: linear-gradient(135deg, #F59E0B, #D97706); }
+        .stat-icon.scores { background: linear-gradient(135deg, #8B5CF6, #7C3AED); }
+        .stat-icon.categories { background: linear-gradient(135deg, #EF4444, #DC2626); }
+
         .stat-number {
-            font-size: 2.5rem;
-            font-weight: bold;
-            margin-bottom: 0.5rem;
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1E293B;
+            margin-bottom: 0.25rem;
         }
 
         .stat-label {
-            font-size: 1rem;
-            opacity: 0.9;
+            color: #64748B;
+            font-size: 0.875rem;
+            font-weight: 500;
         }
 
-        .report-grid {
+        /* Report Sections */
+        .reports-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
             gap: 2rem;
+        }
+
+        .report-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            overflow: hidden;
+        }
+
+        .report-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #E2E8F0;
+            background: #F8FAFC;
+        }
+
+        .report-title {
+            font-weight: 600;
+            color: #1E293B;
+            font-size: 1.125rem;
+        }
+
+        .report-content {
+            padding: 2rem;
         }
 
         .table-container {
@@ -298,331 +549,491 @@ if ($event_id) {
             overflow-y: auto;
         }
 
-        .table {
+        .report-table {
             width: 100%;
             border-collapse: collapse;
         }
 
-        .table th,
-        .table td {
-            padding: 0.8rem;
+        .report-table th {
+            background: #F8FAFC;
+            padding: 0.75rem 1rem;
             text-align: left;
-            border-bottom: 1px solid #e1e8ed;
-            font-size: 0.9rem;
-        }
-
-        .table th {
-            background: #f8f9fa;
             font-weight: 600;
-            color: #2c3e50;
+            color: #374151;
+            border-bottom: 1px solid #E2E8F0;
+            font-size: 0.875rem;
             position: sticky;
             top: 0;
         }
 
-        .table tr:hover {
-            background: #f8f9fa;
+        .report-table td {
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 0.875rem;
         }
 
-        .rank-1 { background: #fff8dc; border-left: 4px solid #f39c12; }
-        .rank-2 { background: #f0f8ff; border-left: 4px solid #95a5a6; }
-        .rank-3 { background: #fff5ee; border-left: 4px solid #e67e22; }
+        .report-table tr:hover {
+            background: #F8FAFC;
+        }
 
-        .score-badge {
-            background: #3498db;
+        .rank-badge {
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.875rem;
             color: white;
-            padding: 0.3rem 0.8rem;
-            border-radius: 15px;
-            font-size: 0.9rem;
-            font-weight: bold;
         }
+
+        .rank-1 { background: #F59E0B; }
+        .rank-2 { background: #6B7280; }
+        .rank-3 { background: #CD7C2F; }
+        .rank-other { background: #8B5CF6; }
 
         .category-badge {
-            padding: 0.3rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.8rem;
-            font-weight: bold;
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            background: #27ae60;
+            background: #8B5CF6;
             color: white;
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 20px;
-            background: #e1e8ed;
-            border-radius: 10px;
-            overflow: hidden;
-            margin: 0.5rem 0;
+        .score-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 15px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            background: #10B981;
+            color: white;
         }
 
-        .progress-fill {
-            height: 100%;
-            background: #3498db;
-            transition: width 0.3s ease;
+        .no-reports {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: #64748B;
         }
 
-        .export-buttons {
-            margin-bottom: 2rem;
-            display: flex;
-            gap: 1rem;
-            flex-wrap: wrap;
+        .no-reports h3 {
+            color: #1E293B;
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+            }
+
+            .sidebar.open {
+                transform: translateX(0);
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+
+            .reports-grid {
+                grid-template-columns: 1fr;
+            }
         }
 
         @media (max-width: 768px) {
-            .report-grid {
-                grid-template-columns: 1fr;
+            .top-header {
+                padding: 1rem;
+                flex-direction: column;
+                gap: 1rem;
+                align-items: stretch;
             }
-            
+
+            .content-area {
+                padding: 1rem;
+            }
+
             .stats-grid {
                 grid-template-columns: repeat(2, 1fr);
             }
-            
-            .table th,
-            .table td {
-                padding: 0.5rem;
-                font-size: 0.8rem;
-            }
-            
-            .export-buttons {
-                flex-direction: column;
+
+            .events-grid {
+                grid-template-columns: 1fr;
             }
         }
 
-        .chart-container {
-            width: 100%;
-            height: 300px;
-            margin: 1rem 0;
-            background: #f8f9fa;
-            border-radius: 10px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #666;
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            color: #64748B;
+            cursor: pointer;
+        }
+
+        @media (max-width: 1024px) {
+            .mobile-menu-btn {
+                display: block;
+            }
+        }
+
+        .event-info-banner {
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            color: white;
+            padding: 2rem;
+            border-radius: 16px;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .event-info-banner h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        .event-info-banner p {
+            opacity: 0.9;
+            font-size: 1rem;
         }
     </style>
 </head>
 <body>
-    <header class="header">
-        <div class="header-content">
-            <h1>Reports & Analytics</h1>
-            <div>
-                <a href="events.php" class="btn btn-secondary">Events</a>
-                <a href="../dashboard.php" class="btn btn-primary">Dashboard</a>
-            </div>
-        </div>
-    </header>
-
-    <div class="container">
-        <?php if (!$event_id): ?>
-        <!-- Event Selection -->
-        <div class="card">
-            <div class="card-header">Select Event for Report Generation</div>
-            <div class="card-body">
-                <div class="event-selector">
-                    <?php foreach ($events as $event): ?>
-                        <a href="?event_id=<?php echo $event['event_id']; ?>" class="event-card">
-                            <h3><?php echo htmlspecialchars($event['event_name']); ?></h3>
-                            <p><strong>Date:</strong> <?php echo date('M d, Y', strtotime($event['event_date'])); ?></p>
-                            <p><strong>Status:</strong> <?php echo ucfirst($event['status']); ?></p>
-                            <p><strong>Location:</strong> <?php echo htmlspecialchars($event['location'] ?? 'TBA'); ?></p>
-                        </a>
-                    <?php endforeach; ?>
+    <div class="dashboard-container">
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="logo">
+                    <div class="logo-icon">🤸</div>
+                    <div class="logo-text">GymnasticsScore</div>
                 </div>
             </div>
-        </div>
-        <?php else: ?>
 
-        <!-- Report Header -->
-        <div class="card">
-            <div class="card-header">
-                Event Report: <?php echo htmlspecialchars($selected_event['event_name']); ?>
-            </div>
-            <div class="card-body">
-                <p><strong>Date:</strong> <?php echo date('M d, Y', strtotime($selected_event['event_date'])); ?></p>
-                <p><strong>Location:</strong> <?php echo htmlspecialchars($selected_event['location'] ?? 'TBA'); ?></p>
-                <p><strong>Status:</strong> <?php echo ucfirst($selected_event['status']); ?></p>
-                
-                <div class="export-buttons">
-                    <button onclick="window.print()" class="btn btn-primary">Print Report</button>
-                    <button onclick="exportToCSV()" class="btn btn-success">Export CSV</button>
-                </div>
-            </div>
-        </div>
+            <nav class="nav-menu">
+                <a href="../dashboard.php" class="nav-item">
+                    <div class="nav-icon">📊</div>
+                    <div class="nav-text">Dashboard</div>
+                </a>
 
-        <!-- Event Summary Statistics -->
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $report_data['summary']['total_gymnasts']; ?></div>
-                <div class="stat-label">Total Gymnasts</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $report_data['summary']['total_teams']; ?></div>
-                <div class="stat-label">Participating Teams</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $report_data['summary']['total_judges']; ?></div>
-                <div class="stat-label">Active Judges</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $report_data['summary']['total_scores']; ?></div>
-                <div class="stat-label">Scores Recorded</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number"><?php echo $report_data['summary']['total_categories']; ?></div>
-                <div class="stat-label">Categories</div>
-            </div>
-        </div>
+                <a href="events.php" class="nav-item">
+                    <div class="nav-icon">🏆</div>
+                    <div class="nav-text">Events Module</div>
+                </a>
 
-        <!-- Reports Grid -->
-        <div class="report-grid">
-            <!-- Top Performers -->
-            <div class="card">
-                <div class="card-header">Top Performers</div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Rank</th>
-                                    <th>Gymnast</th>
-                                    <th>Category</th>
-                                    <th>Team</th>
-                                    <th>Total Score</th>
-                                    <th>Events</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php 
-                                $rank = 1;
-                                foreach ($report_data['top_performers'] as $performer): 
-                                $rank_class = $rank <= 3 ? "rank-{$rank}" : "";
-                                ?>
-                                <tr class="<?php echo $rank_class; ?>">
-                                    <td><strong><?php echo $rank; ?></strong></td>
-                                    <td><?php echo htmlspecialchars($performer['name']); ?></td>
-                                    <td>
-                                        <span class="category-badge">
-                                            <?php echo htmlspecialchars($performer['category']); ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo htmlspecialchars($performer['team']); ?></td>
-                                    <td>
-                                        <span class="score-badge">
-                                            <?php echo number_format($performer['total_score'], 2); ?>
-                                        </span>
-                                    </td>
-                                    <td><?php echo $performer['apparatus_count']; ?></td>
-                                </tr>
-                                <?php 
-                                $rank++;
-                                endforeach; 
-                                ?>
-                            </tbody>
-                        </table>
+                <a href="judges.php" class="nav-item">
+                    <div class="nav-icon">👨‍⚖️</div>
+                    <div class="nav-text">Judges Module</div>
+                </a>
+
+                <a href="athletes.php" class="nav-item">
+                    <div class="nav-icon">🤸‍♂️</div>
+                    <div class="nav-text">Athletes Module</div>
+                </a>
+
+                <a href="teams.php" class="nav-item">
+                    <div class="nav-icon">👥</div>
+                    <div class="nav-text">Teams Module</div>
+                </a>
+
+                <a href="organizations.php" class="nav-item">
+                    <div class="nav-icon">🏢</div>
+                    <div class="nav-text">Organizations</div>
+                </a>
+
+                <a href="reports.php" class="nav-item active">
+                    <div class="nav-icon">📈</div>
+                    <div class="nav-text">Reports Module</div>
+                </a>
+
+                <a href="../leaderboard.php" class="nav-item">
+                    <div class="nav-icon">🏅</div>
+                    <div class="nav-text">Live Scores</div>
+                </a>
+
+                <?php if ($_SESSION['role'] == 'super_admin'): ?>
+                <a href="system-management.php" class="nav-item">
+                    <div class="nav-icon">⚙️</div>
+                    <div class="nav-text">Administration</div>
+                </a>
+                <?php endif; ?>
+            </nav>
+
+            <div class="sidebar-footer">
+                <a href="../logout.php" class="sign-out-btn">
+                    <div class="nav-icon">🚪</div>
+                    <div class="nav-text">Sign Out</div>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-header">
+                <div class="header-left">
+                    <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+                    <h1>Reports & Analytics</h1>
+                    <div class="breadcrumb">
+                        <span>🏠 Home</span>
+                        <span class="breadcrumb-separator">›</span>
+                        <span>Reports</span>
                     </div>
                 </div>
-            </div>
+                <div class="header-right">
+                    <?php if ($selected_event): ?>
+                    <button class="export-btn" onclick="window.print()">
+                        🖨️ Print Report
+                    </button>
+                    <button class="export-btn" onclick="exportToCSV()">
+                        📊 Export CSV
+                    </button>
+                    <?php endif; ?>
+                </div>
+            </header>
 
-            <!-- Team Rankings -->
-            <div class="card">
-                <div class="card-header">Team Performance</div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Team</th>
-                                    <th>Gymnasts</th>
-                                    <th>Total Scores</th>
-                                    <th>Activity</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($report_data['team_rankings'] as $team): ?>
-                                <tr>
-                                    <td><strong><?php echo htmlspecialchars($team['team_name']); ?></strong></td>
-                                    <td><?php echo $team['gymnast_count']; ?></td>
-                                    <td><?php echo $team['total_scores']; ?></td>
-                                    <td>
-                                        <div class="progress-bar">
-                                            <div class="progress-fill" style="width: <?php echo min(100, ($team['total_scores'] / max(1, $report_data['summary']['total_scores'])) * 100 * 10); ?>%"></div>
-                                        </div>
-                                    </td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+            <div class="content-area">
+                <?php if (!$event_id): ?>
+                <!-- Event Selection -->
+                <div class="event-selection-section">
+                    <div class="section-header">
+                        <h2 class="section-title">Select Event for Report Generation</h2>
+                    </div>
+                    <div class="section-content">
+                        <div class="events-grid">
+                            <?php foreach ($events as $event): ?>
+                                <a href="?event_id=<?php echo $event['event_id']; ?>" class="event-card">
+                                    <h3><?php echo htmlspecialchars($event['event_name']); ?></h3>
+                                    <div class="event-meta">📅 <?php echo date('M d, Y', strtotime($event['event_date'])); ?></div>
+                                    <div class="event-meta">📍 <?php echo htmlspecialchars($event['location'] ?? 'Location TBA'); ?></div>
+                                    <span class="event-status status-<?php echo $event['status']; ?>">
+                                        <?php echo ucfirst($event['status']); ?>
+                                    </span>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
                     </div>
                 </div>
-            </div>
+                <?php else: ?>
 
-            <!-- Judge Performance -->
-            <div class="card">
-                <div class="card-header">Judge Performance</div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Judge</th>
-                                    <th>Scores Given</th>
-                                    <th>Apparatus</th>
-                                    <th>Avg Components</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($report_data['judge_performance'] as $judge): ?>
-                                <tr>
-                                    <td><strong><?php echo htmlspecialchars($judge['judge_name']); ?></strong></td>
-                                    <td><?php echo $judge['scores_given']; ?></td>
-                                    <td><?php echo $judge['apparatus_assigned']; ?></td>
-                                    <td><?php echo number_format($judge['avg_total_component'], 2); ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                <!-- Event Info Banner -->
+                <div class="event-info-banner">
+                    <h2><?php echo htmlspecialchars($selected_event['event_name']); ?></h2>
+                    <p>
+                        📅 <?php echo date('M d, Y', strtotime($selected_event['event_date'])); ?> • 
+                        📍 <?php echo htmlspecialchars($selected_event['location'] ?? 'Location TBA'); ?> • 
+                        Status: <?php echo ucfirst($selected_event['status']); ?>
+                    </p>
+                </div>
+
+                <!-- Event Summary Statistics -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon gymnasts">🤸‍♂️</div>
+                        </div>
+                        <div class="stat-number"><?php echo $report_data['summary']['total_gymnasts']; ?></div>
+                        <div class="stat-label">Total Gymnasts</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon teams">👥</div>
+                        </div>
+                        <div class="stat-number"><?php echo $report_data['summary']['total_teams']; ?></div>
+                        <div class="stat-label">Participating Teams</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon judges">👨‍⚖️</div>
+                        </div>
+                        <div class="stat-number"><?php echo $report_data['summary']['total_judges']; ?></div>
+                        <div class="stat-label">Active Judges</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon scores">📝</div>
+                        </div>
+                        <div class="stat-number"><?php echo $report_data['summary']['total_scores']; ?></div>
+                        <div class="stat-label">Scores Recorded</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-header">
+                            <div class="stat-icon categories">🏷️</div>
+                        </div>
+                        <div class="stat-number"><?php echo $report_data['summary']['total_categories']; ?></div>
+                        <div class="stat-label">Categories</div>
                     </div>
                 </div>
-            </div>
 
-            <!-- Apparatus Statistics -->
-            <div class="card">
-                <div class="card-header">Apparatus Statistics</div>
-                <div class="card-body">
-                    <div class="table-container">
-                        <table class="table">
-                            <thead>
-                                <tr>
-                                    <th>Apparatus</th>
-                                    <th>Performances</th>
-                                    <th>Avg D Score</th>
-                                    <th>Avg A Score</th>
-                                    <th>Avg E Score</th>
-                                    <th>Avg Deduction</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                <?php foreach ($report_data['apparatus_stats'] as $apparatus): ?>
-                                <tr>
-                                    <td><strong><?php echo htmlspecialchars($apparatus['apparatus_name']); ?></strong></td>
-                                    <td><?php echo $apparatus['total_performances']; ?></td>
-                                    <td><?php echo number_format($apparatus['avg_d_score'], 2); ?></td>
-                                    <td><?php echo number_format($apparatus['avg_a_score'], 2); ?></td>
-                                    <td><?php echo number_format($apparatus['avg_e_score'], 2); ?></td>
-                                    <td><?php echo number_format($apparatus['avg_deduction'], 2); ?></td>
-                                </tr>
-                                <?php endforeach; ?>
-                            </tbody>
-                        </table>
+                <!-- Reports Grid -->
+                <div class="reports-grid">
+                    <!-- Top Performers -->
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3 class="report-title">Top Performers</h3>
+                        </div>
+                        <div class="report-content">
+                            <div class="table-container">
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Rank</th>
+                                            <th>Gymnast</th>
+                                            <th>Category</th>
+                                            <th>Team</th>
+                                            <th>Total Score</th>
+                                            <th>Events</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php 
+                                        $rank = 1;
+                                        foreach ($report_data['top_performers'] as $performer): 
+                                        ?>
+                                        <tr>
+                                            <td>
+                                                <span class="rank-badge <?php echo $rank <= 3 ? "rank-{$rank}" : "rank-other"; ?>">
+                                                    <?php echo $rank; ?>
+                                                </span>
+                                            </td>
+                                            <td><strong><?php echo htmlspecialchars($performer['name']); ?></strong></td>
+                                            <td>
+                                                <span class="category-badge">
+                                                    <?php echo htmlspecialchars($performer['category']); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo htmlspecialchars($performer['team']); ?></td>
+                                            <td>
+                                                <span class="score-badge">
+                                                    <?php echo number_format($performer['total_score'], 2); ?>
+                                                </span>
+                                            </td>
+                                            <td><?php echo $performer['apparatus_count']; ?></td>
+                                        </tr>
+                                        <?php 
+                                        $rank++;
+                                        endforeach; 
+                                        ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Team Performance -->
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3 class="report-title">Team Performance</h3>
+                        </div>
+                        <div class="report-content">
+                            <div class="table-container">
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Team</th>
+                                            <th>Gymnasts</th>
+                                            <th>Total Scores</th>
+                                            <th>Activity</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($report_data['team_rankings'] as $team): ?>
+                                        <tr>
+                                            <td><strong><?php echo htmlspecialchars($team['team_name']); ?></strong></td>
+                                            <td><?php echo $team['gymnast_count']; ?></td>
+                                            <td><?php echo $team['total_scores']; ?></td>
+                                            <td>
+                                                <div style="width: 100%; height: 20px; background: #E2E8F0; border-radius: 10px; overflow: hidden;">
+                                                    <div style="width: <?php echo min(100, ($team['total_scores'] / max(1, $report_data['summary']['total_scores'])) * 100 * 10); ?>%; height: 100%; background: #8B5CF6; border-radius: 10px;"></div>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Judge Performance -->
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3 class="report-title">Judge Performance</h3>
+                        </div>
+                        <div class="report-content">
+                            <div class="table-container">
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Judge</th>
+                                            <th>Scores Given</th>
+                                            <th>Apparatus</th>
+                                            <th>Avg Components</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($report_data['judge_performance'] as $judge): ?>
+                                        <tr>
+                                            <td><strong><?php echo htmlspecialchars($judge['judge_name']); ?></strong></td>
+                                            <td><?php echo $judge['scores_given']; ?></td>
+                                            <td><?php echo $judge['apparatus_assigned']; ?></td>
+                                            <td><?php echo number_format($judge['avg_total_component'], 2); ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Apparatus Statistics -->
+                    <div class="report-card">
+                        <div class="report-header">
+                            <h3 class="report-title">Apparatus Statistics</h3>
+                        </div>
+                        <div class="report-content">
+                            <div class="table-container">
+                                <table class="report-table">
+                                    <thead>
+                                        <tr>
+                                            <th>Apparatus</th>
+                                            <th>Performances</th>
+                                            <th>Avg D Score</th>
+                                            <th>Avg A Score</th>
+                                            <th>Avg E Score</th>
+                                            <th>Avg Deduction</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <?php foreach ($report_data['apparatus_stats'] as $apparatus): ?>
+                                        <tr>
+                                            <td><strong><?php echo htmlspecialchars($apparatus['apparatus_name']); ?></strong></td>
+                                            <td><?php echo $apparatus['total_performances']; ?></td>
+                                            <td><?php echo number_format($apparatus['avg_d_score'], 2); ?></td>
+                                            <td><?php echo number_format($apparatus['avg_a_score'], 2); ?></td>
+                                            <td><?php echo number_format($apparatus['avg_e_score'], 2); ?></td>
+                                            <td><?php echo number_format($apparatus['avg_deduction'], 2); ?></td>
+                                        </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </div>
 
-        <?php endif; ?>
+                <?php endif; ?>
+            </div>
+        </main>
     </div>
 
     <script>
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('open');
+        }
+
         function exportToCSV() {
             const event_name = "<?php echo addslashes($selected_event['event_name'] ?? ''); ?>";
             const csv_data = generateCSVData();
@@ -669,6 +1080,18 @@ if ($event_id) {
             
             return csv;
         }
+
+        // Close sidebar when clicking outside on mobile
+        document.addEventListener('click', function(event) {
+            const sidebar = document.getElementById('sidebar');
+            const menuBtn = document.querySelector('.mobile-menu-btn');
+            
+            if (window.innerWidth <= 1024) {
+                if (!sidebar.contains(event.target) && !menuBtn.contains(event.target)) {
+                    sidebar.classList.remove('open');
+                }
+            }
+        });
 
         // Auto-refresh every 60 seconds for live events
         <?php if ($selected_event && $selected_event['status'] == 'active'): ?>
