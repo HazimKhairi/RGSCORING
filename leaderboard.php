@@ -7,6 +7,10 @@ startSecureSession();
 $database = new Database();
 $conn = $database->getConnection();
 
+// Check if user is logged in
+$is_logged_in = isLoggedIn();
+$is_admin = $is_logged_in && hasRole('admin');
+
 // Get all active events
 $events_query = "SELECT * FROM events WHERE status = 'active' ORDER BY event_date DESC";
 $events_stmt = $conn->prepare($events_query);
@@ -91,6 +95,8 @@ function getDetailedLeaderboardData($conn, $event_id, $category = '', $apparatus
         $row['total_d'] = $score->totalScoreD();
         $row['middle_a'] = $score->getMiddleAScore();
         $row['middle_e'] = $score->getMiddleEScore();
+        $row['total_a'] = ($row['score_a1'] + $row['score_a2'] + $row['score_a3']) / 3;
+        $row['total_e'] = ($row['score_e1'] + $row['score_e2'] + $row['score_e3']) / 3;
         $row['a_deduction'] = 10 - $row['middle_a'];
         $row['e_deduction'] = 10 - $row['middle_e'];
         $row['final_score'] = $score->getFinalScore();
@@ -191,6 +197,12 @@ if ($selected_event) {
             color: white;
         }
 
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
         .live-indicator {
             display: flex;
             align-items: center;
@@ -207,6 +219,44 @@ if ($selected_event) {
             background: white;
             border-radius: 50%;
             animation: pulse 2s infinite;
+        }
+
+        .login-btn {
+            background: #8B5CF6;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            background: #7C3AED;
+            transform: translateY(-2px);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            background: #2D2E3F;
+            border-radius: 10px;
+            border: 1px solid #3D3E4F;
+        }
+
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            background: linear-gradient(135deg, #8B5CF6, #A855F7);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.875rem;
         }
 
         @keyframes pulse {
@@ -251,6 +301,15 @@ if ($selected_event) {
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+        }
+
+        .access-level-info {
+            background: rgba(139, 92, 246, 0.1);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
         }
 
         .filters-section {
@@ -331,6 +390,13 @@ if ($selected_event) {
         .detailed-table {
             width: 100%;
             border-collapse: collapse;
+        }
+
+        .public-view {
+            min-width: 600px;
+        }
+
+        .detailed-view {
             min-width: 1400px;
         }
 
@@ -345,6 +411,7 @@ if ($selected_event) {
             text-transform: uppercase;
             letter-spacing: 0.5px;
             white-space: nowrap;
+            vertical-align: middle;
         }
 
         .detailed-table td {
@@ -352,6 +419,7 @@ if ($selected_event) {
             text-align: center;
             border-bottom: 1px solid #2D2E3F;
             font-size: 0.9rem;
+            vertical-align: middle;
         }
 
         .detailed-table tbody tr:hover {
@@ -371,6 +439,7 @@ if ($selected_event) {
             font-weight: 700;
             font-size: 1.1rem;
             color: #8B5CF6;
+            text-align: center !important;
         }
 
         .gymnast-cell {
@@ -388,26 +457,33 @@ if ($selected_event) {
         .apparatus-cell {
             font-weight: 600;
             color: #10B981;
+            text-align: center !important;
         }
 
         .score-cell {
             font-weight: 500;
             color: #F3F4F6;
+            text-align: center !important;
+        }
+
+        .total-score-cell {
+            font-weight: 600;
+            font-size: 1.05rem;
+            color: #8B5CF6;
+            background: rgba(139, 92, 246, 0.1);
+            text-align: center !important;
         }
 
         .final-score-cell {
             font-weight: 700;
-            font-size: 1.1rem;
-            color: #8B5CF6;
-            background: #2D2E3F;
+            font-size: 1.2rem;
+            color: #10B981;
+            background: rgba(16, 185, 129, 0.1);
+            text-align: center !important;
         }
 
         .difficulty-section {
             background: rgba(59, 130, 246, 0.1);
-        }
-
-        .execution-section {
-            background: rgba(16, 185, 129, 0.1);
         }
 
         .artistry-section {
@@ -435,7 +511,28 @@ if ($selected_event) {
             font-size: 0.9rem;
         }
 
-        /* Responsive adjustments */
+        .rank-1 { color: #F59E0B; }
+        .rank-2 { color: #6B7280; }
+        .rank-3 { color: #CD7C2F; }
+
+        .zero-score {
+            color: #6B7280;
+            opacity: 0.6;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .detailed-table th,
+            .detailed-table td {
+                padding: 0.75rem 0.5rem;
+                font-size: 0.8rem;
+            }
+            
+            .page-title {
+                font-size: 2rem;
+            }
+        }
+
         @media (max-width: 768px) {
             .header-content {
                 padding: 0 1rem;
@@ -448,7 +545,7 @@ if ($selected_event) {
             }
             
             .page-title {
-                font-size: 2rem;
+                font-size: 1.8rem;
             }
             
             .filters-grid {
@@ -456,23 +553,65 @@ if ($selected_event) {
             }
             
             .detailed-table {
-                min-width: 800px;
+                min-width: 100%;
             }
             
             .detailed-table th,
             .detailed-table td {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.8rem;
+                padding: 0.5rem 0.25rem;
+                font-size: 0.75rem;
+            }
+            
+            .gymnast-cell,
+            .club-cell {
+                min-width: 120px;
+            }
+            
+            .leaderboard-header {
+                padding: 1.5rem;
+            }
+            
+            .leaderboard-title {
+                font-size: 1.5rem;
+            }
+            
+            .event-info {
+                font-size: 0.9rem;
             }
         }
 
-        .rank-1 { color: #F59E0B; }
-        .rank-2 { color: #6B7280; }
-        .rank-3 { color: #CD7C2F; }
+        @media (max-width: 480px) {
+            .detailed-table th,
+            .detailed-table td {
+                padding: 0.4rem 0.2rem;
+                font-size: 0.7rem;
+            }
+            
+            .rank-cell,
+            .final-score-cell {
+                font-size: 0.9rem;
+            }
+            
+            .apparatus-cell {
+                min-width: 80px;
+            }
+        }
 
-        .zero-score {
-            color: #6B7280;
-            opacity: 0.6;
+        /* Improve table alignment */
+        .detailed-table th:first-child,
+        .detailed-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: #2D2E3F;
+            z-index: 10;
+        }
+
+        .detailed-table th:nth-child(2),
+        .detailed-table td:nth-child(2) {
+            position: sticky;
+            left: 50px;
+            background: #2D2E3F;
+            z-index: 10;
         }
     </style>
 </head>
@@ -483,18 +622,35 @@ if ($selected_event) {
                 <div class="logo-icon">🏆</div>
                 <div class="logo-text">Live Leaderboard</div>
             </div>
-            <div class="live-indicator">
-                <div class="live-dot"></div>
-                LIVE SCORING
+            <div class="header-actions">
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    LIVE SCORING
+                </div>
+                <?php if ($is_logged_in): ?>
+                    <div class="user-info">
+                        <div class="user-avatar"><?php echo strtoupper(substr($_SESSION['full_name'], 0, 2)); ?></div>
+                        <div>
+                            <div style="font-size: 0.8rem; font-weight: 600;"><?php echo htmlspecialchars($_SESSION['full_name']); ?></div>
+                            <div style="font-size: 0.7rem; color: #A3A3A3;"><?php echo ucfirst(str_replace('_', ' ', $_SESSION['role'])); ?></div>
+                        </div>
+                    </div>
+                <?php else: ?>
+                <?php endif; ?>
             </div>
         </div>
     </header>
 
     <div class="container">
-        <a href="index.php" class="back-btn">← Back to Competitions</a>
+        <?php if (isset($_SESSION['user_id'])): ?>
+            <a href="dashboard.php" class="back-btn">← Back to Dashboard</a>
+        <?php else: ?>
+            <a href="index.php" class="back-btn">← Back to Home</a>
+        <?php endif; ?>
 
         <div class="page-header">
-            <h1 class="page-title">Detailed Scoring Leaderboard</h1>
+            <h1 class="page-title">Live Competition Leaderboard</h1>
+           
         </div>
 
         <div class="filters-section">
@@ -558,16 +714,19 @@ if ($selected_event) {
 
             <?php if (!empty($leaderboard_data)): ?>
             <div class="table-container">
-                <table class="detailed-table">
+                <table class="detailed-table <?php echo $is_logged_in ? 'detailed-view' : 'public-view'; ?>">
                     <thead>
+                        <?php if ($is_logged_in): ?>
+                        <!-- Detailed view for logged in users -->
                         <tr>
-                            <th rowspan="2">BIL</th>
+                            <th rowspan="2">RANK</th>
                             <th rowspan="2">GYMNAST</th>
                             <th rowspan="2">CLUB</th>
                             <th rowspan="2">APPARATUS</th>
                             <th colspan="7" class="section-header difficulty-section">DIFFICULTY</th>
-                            <th colspan="7" class="section-header execution-section">EXECUTION</th>
-                            <th rowspan="2" class="section-header artistry-section">FINAL SCORE</th>
+                            <th colspan="4" class="section-header artistry-section">ARTISTRY</th>
+                            <th colspan="4" class="section-header artistry-section">EXECUTION</th>
+                            <th rowspan="2" class="section-header">FINAL SCORE</th>
                         </tr>
                         <tr>
                             <!-- Difficulty columns -->
@@ -578,15 +737,29 @@ if ($selected_event) {
                             <th class="difficulty-section">D4</th>
                             <th class="difficulty-section">D3-D4</th>
                             <th class="difficulty-section">Total D</th>
-                            <!-- Execution columns -->
-                            <th class="execution-section">A1</th>
-                            <th class="execution-section">A2</th>
-                            <th class="execution-section">A3</th>
-                            <th class="execution-section">10-A(A)</th>
-                            <th class="execution-section">E1</th>
-                            <th class="execution-section">E2</th>
-                            <th class="execution-section">E3</th>
+                            <!-- Artistry columns -->
+                            <th class="artistry-section">A1</th>
+                            <th class="artistry-section">A2</th>
+                            <th class="artistry-section">A3</th>
+                            <th class="artistry-section">Total A</th>
+                            <th class="artistry-section">E1</th>
+                            <th class="artistry-section">E2</th>
+                            <th class="artistry-section">E3</th>
+                            <th class="artistry-section">Total E</th>
                         </tr>
+                        <?php else: ?>
+                        <!-- Simplified view for public users -->
+                        <tr>
+                            <th>RANK</th>
+                            <th>GYMNAST</th>
+                            <th>CLUB</th>
+                            <th>APPARATUS</th>
+                            <th class="difficulty-section">Total D</th>
+                            <th class="artistry-section">Total A</th>
+                            <th class="artistry-section">Total E</th>
+                            <th class="section-header">FINAL SCORE</th>
+                        </tr>
+                        <?php endif; ?>
                     </thead>
                     <tbody>
                         <?php 
@@ -602,6 +775,8 @@ if ($selected_event) {
                             </td>
                             <td class="apparatus-cell"><?php echo htmlspecialchars($data['apparatus_name']); ?></td>
                             
+                            <?php if ($is_logged_in): ?>
+                            <!-- Detailed view columns -->
                             <!-- Difficulty scores -->
                             <td class="score-cell <?php echo ($data['score_d1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d1'], 2); ?></td>
                             <td class="score-cell <?php echo ($data['score_d2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d2'], 2); ?></td>
@@ -609,16 +784,23 @@ if ($selected_event) {
                             <td class="score-cell <?php echo ($data['score_d3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d3'], 2); ?></td>
                             <td class="score-cell <?php echo ($data['score_d4'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d4'], 2); ?></td>
                             <td class="score-cell"><?php echo number_format($data['d3_d4_avg'], 2); ?></td>
-                            <td class="score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
+                            <td class="total-score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
                             
-                            <!-- Execution scores -->
+                            <!-- Artistry scores -->
                             <td class="score-cell <?php echo ($data['score_a1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a1'], 2); ?></td>
                             <td class="score-cell <?php echo ($data['score_a2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a2'], 2); ?></td>
                             <td class="score-cell <?php echo ($data['score_a3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a3'], 2); ?></td>
-                            <td class="score-cell"><?php echo number_format($data['a_deduction'], 2); ?></td>
+                            <td class="total-score-cell"><?php echo number_format($data['total_a'], 2); ?></td>
                             <td class="score-cell <?php echo ($data['score_e1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e1'], 2); ?></td>
                             <td class="score-cell <?php echo ($data['score_e2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e2'], 2); ?></td>
                             <td class="score-cell <?php echo ($data['score_e3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e3'], 2); ?></td>
+                            <td class="total-score-cell"><?php echo number_format($data['total_e'], 2); ?></td>
+                            <?php else: ?>
+                            <!-- Public view columns -->
+                            <td class="total-score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
+                            <td class="total-score-cell"><?php echo number_format($data['total_a'], 2); ?></td>
+                            <td class="total-score-cell"><?php echo number_format($data['total_e'], 2); ?></td>
+                            <?php endif; ?>
                             
                             <!-- Final score -->
                             <td class="final-score-cell"><?php echo number_format($data['final_score'], 2); ?></td>
@@ -639,13 +821,14 @@ if ($selected_event) {
 
             <div class="refresh-info">
                 📱 Page automatically refreshes every 15 seconds for live updates • Last updated: <?php echo date('H:i:s'); ?>
+            
             </div>
         </div>
         <?php else: ?>
         <div class="leaderboard-container">
             <div class="no-data">
                 <h3>Select an Event</h3>
-                <p>Choose an active event above to view the detailed scoring leaderboard.</p>
+                <p>Choose an active event above to view the live competition leaderboard.</p>
             </div>
         </div>
         <?php endif; ?>
@@ -670,6 +853,30 @@ if ($selected_event) {
                 select.style.background = '#2D2E3F';
             }
         });
+
+        // Add horizontal scroll indicator for mobile
+        function addScrollIndicator() {
+            const tableContainer = document.querySelector('.table-container');
+            const table = document.querySelector('.detailed-table');
+            
+            if (tableContainer && table && window.innerWidth <= 768) {
+                const canScrollRight = tableContainer.scrollLeft < (table.offsetWidth - tableContainer.offsetWidth);
+                const canScrollLeft = tableContainer.scrollLeft > 0;
+                
+                if (canScrollRight) {
+                    tableContainer.style.boxShadow = 'inset -10px 0 10px -10px rgba(139, 92, 246, 0.3)';
+                } else if (canScrollLeft) {
+                    tableContainer.style.boxShadow = 'inset 10px 0 10px -10px rgba(139, 92, 246, 0.3)';
+                } else {
+                    tableContainer.style.boxShadow = 'none';
+                }
+            }
+        }
+
+        // Add scroll event listener
+        document.querySelector('.table-container')?.addEventListener('scroll', addScrollIndicator);
+        window.addEventListener('resize', addScrollIndicator);
+        window.addEventListener('load', addScrollIndicator);
     </script>
 </body>
 </html>

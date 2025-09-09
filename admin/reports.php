@@ -929,7 +929,6 @@ if ($event_id) {
                                             <th>Team</th>
                                             <th>Gymnasts</th>
                                             <th>Total Scores</th>
-                                            <th>Activity</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -938,11 +937,7 @@ if ($event_id) {
                                             <td><strong><?php echo htmlspecialchars($team['team_name']); ?></strong></td>
                                             <td><?php echo $team['gymnast_count']; ?></td>
                                             <td><?php echo $team['total_scores']; ?></td>
-                                            <td>
-                                                <div style="width: 100%; height: 20px; background: #E2E8F0; border-radius: 10px; overflow: hidden;">
-                                                    <div style="width: <?php echo min(100, ($team['total_scores'] / max(1, $report_data['summary']['total_scores'])) * 100 * 10); ?>%; height: 100%; background: #8B5CF6; border-radius: 10px;"></div>
-                                                </div>
-                                            </td>
+                                          
                                         </tr>
                                         <?php endforeach; ?>
                                     </tbody>
@@ -951,71 +946,6 @@ if ($event_id) {
                         </div>
                     </div>
 
-                    <!-- Judge Performance -->
-                    <div class="report-card">
-                        <div class="report-header">
-                            <h3 class="report-title">Judge Performance</h3>
-                        </div>
-                        <div class="report-content">
-                            <div class="table-container">
-                                <table class="report-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Judge</th>
-                                            <th>Scores Given</th>
-                                            <th>Apparatus</th>
-                                            <th>Avg Components</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($report_data['judge_performance'] as $judge): ?>
-                                        <tr>
-                                            <td><strong><?php echo htmlspecialchars($judge['judge_name']); ?></strong></td>
-                                            <td><?php echo $judge['scores_given']; ?></td>
-                                            <td><?php echo $judge['apparatus_assigned']; ?></td>
-                                            <td><?php echo number_format($judge['avg_total_component'], 2); ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Apparatus Statistics -->
-                    <div class="report-card">
-                        <div class="report-header">
-                            <h3 class="report-title">Apparatus Statistics</h3>
-                        </div>
-                        <div class="report-content">
-                            <div class="table-container">
-                                <table class="report-table">
-                                    <thead>
-                                        <tr>
-                                            <th>Apparatus</th>
-                                            <th>Performances</th>
-                                            <th>Avg D Score</th>
-                                            <th>Avg A Score</th>
-                                            <th>Avg E Score</th>
-                                            <th>Avg Deduction</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($report_data['apparatus_stats'] as $apparatus): ?>
-                                        <tr>
-                                            <td><strong><?php echo htmlspecialchars($apparatus['apparatus_name']); ?></strong></td>
-                                            <td><?php echo $apparatus['total_performances']; ?></td>
-                                            <td><?php echo number_format($apparatus['avg_d_score'], 2); ?></td>
-                                            <td><?php echo number_format($apparatus['avg_a_score'], 2); ?></td>
-                                            <td><?php echo number_format($apparatus['avg_e_score'], 2); ?></td>
-                                            <td><?php echo number_format($apparatus['avg_deduction'], 2); ?></td>
-                                        </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
                 </div>
 
                 <?php endif; ?>

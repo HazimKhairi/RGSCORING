@@ -918,7 +918,7 @@ if (hasRole('admin') && !empty($setup_status)) {
                             <?php endif; ?>
                         <?php endif; ?>
                     </a>
-
+<!-- 
                     <a href="admin/teams.php" class="module-card orgs-module">
                         <div class="module-header">
                             <div class="module-icon">👥</div>
@@ -936,7 +936,7 @@ if (hasRole('admin') && !empty($setup_status)) {
                                 <div class="module-hint completed">Ready</div>
                             <?php endif; ?>
                         <?php endif; ?>
-                    </a>
+                    </a> -->
 
                     <a href="admin/organizations.php" class="module-card reports-module">
                         <div class="module-header">

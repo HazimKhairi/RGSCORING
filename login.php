@@ -347,9 +347,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <input type="password" id="password" name="password" placeholder="Enter your password" required>
                     </div>
 
-                    <div class="forgot-password">
-                        <a href="leaderboard.php">Forgot Password?</a>
-                    </div>
 
                     <button type="submit" class="login-btn" id="loginBtn">Login</button>
                 </form>

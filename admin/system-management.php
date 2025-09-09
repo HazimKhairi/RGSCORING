@@ -1033,7 +1033,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <td><?php echo htmlspecialchars($user['org_name'] ?? 'None'); ?></td>
                                     <td>
                                         <span class="status-<?php echo $user['is_active'] ? 'active' : 'inactive'; ?>">
-                                            <?php echo $user['is_active'] ? 'Active' : '❌ Inactive'; ?>
+                                            <?php echo $user['is_active'] ? 'Active' : 'Inactive'; ?>
                                         </span>
                                     </td>
                                     <td>
