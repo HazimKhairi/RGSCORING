@@ -1053,7 +1053,7 @@ $total_athletes = array_sum(array_column($organizations, 'total_gymnasts'));
                 </div>
                 <div class="header-right">
                     <button class="header-btn" onclick="openModal('createModal')">
-                        🏢 New Organization
+                        New Organization
                     </button>
                 </div>
             </header>

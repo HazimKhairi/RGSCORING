@@ -934,7 +934,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
                 <div class="super-admin-badge">
-                    🔥 Supreme Administrator
+                     Administrator
                 </div>
             </header>
 
@@ -1003,7 +1003,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     </button>
                                                 </form>
                                             <?php else: ?>
-                                                <span class="btn btn-secondary">👑 You</span>
+                                                <span class="btn btn-secondary">You</span>
                                             <?php endif; ?>
                                         </div>
                                     </td>

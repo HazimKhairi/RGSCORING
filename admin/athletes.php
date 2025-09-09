@@ -903,10 +903,10 @@ $total_categories = count(array_unique(array_column($gymnasts, 'gymnast_category
                 </div>
                 <div class="header-actions">
                     <button class="header-btn" onclick="openModal('athleteModal')">
-                        🤸‍♂️ New Athlete
+                        New Athlete
                     </button>
                     <button class="header-btn secondary" onclick="openModal('teamModal')">
-                        👥 New Team
+                        New Team
                     </button>
                 </div>
             </header>

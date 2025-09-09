@@ -233,7 +233,6 @@ try {
         .hero-section {
             text-align: center;
             padding: 2rem 0;
-            margin-bottom: 2rem;
         }
 
         .hero-badge {
@@ -364,7 +363,6 @@ try {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.5rem;
         }
 
         .section-title {
