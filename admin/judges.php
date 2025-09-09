@@ -799,7 +799,6 @@ $total_scores_given = array_sum(array_column($judges, 'total_scores'));
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">🤸</div>
                     <div class="logo-text">GymnasticsScore</div>
                 </div>
             </div>
@@ -870,18 +869,18 @@ $total_scores_given = array_sum(array_column($judges, 'total_scores'));
                 </div>
                 <div class="header-right">
                     <button class="new-judge-btn" onclick="openModal('createModal')">
-                        ➕ New Judge
+                        New Judge
                     </button>
                 </div>
             </header>
 
             <div class="content-area">
                 <?php if ($message): ?>
-                    <div class="alert alert-success">✅ <?php echo htmlspecialchars($message); ?></div>
+                    <div class="alert alert-success"><?php echo htmlspecialchars($message); ?></div>
                 <?php endif; ?>
 
                 <?php if ($error): ?>
-                    <div class="alert alert-error">❌ <?php echo htmlspecialchars($error); ?></div>
+                    <div class="alert alert-error"> <?php echo htmlspecialchars($error); ?></div>
                 <?php endif; ?>
 
                 <!-- Statistics -->
@@ -964,14 +963,14 @@ $total_scores_given = array_sum(array_column($judges, 'total_scores'));
                             </div>
 
                             <div class="judge-actions">
-                                <a href="?view=<?php echo $judge['user_id']; ?>" class="btn btn-primary">👁️ View</a>
-                                <a href="assign-judges.php?judge_id=<?php echo $judge['user_id']; ?>" class="btn btn-success">📋 Assign</a>
+                                <a href="?view=<?php echo $judge['user_id']; ?>" class="btn btn-primary"> View</a>
+                                <a href="assign-judges.php?judge_id=<?php echo $judge['user_id']; ?>" class="btn btn-success">Assign</a>
                                 <form method="POST" style="display: inline;">
                                     <input type="hidden" name="judge_id" value="<?php echo $judge['user_id']; ?>">
                                     <input type="hidden" name="is_active" value="<?php echo $judge['is_active'] ? '0' : '1'; ?>">
                                     <button type="submit" name="update_judge_status" 
                                             class="btn <?php echo $judge['is_active'] ? 'btn-warning' : 'btn-success'; ?>">
-                                        <?php echo $judge['is_active'] ? '⏸️ Deactivate' : '▶️ Activate'; ?>
+                                        <?php echo $judge['is_active'] ? 'Deactivate' : 'Activate'; ?>
                                     </button>
                                 </form>
                             </div>

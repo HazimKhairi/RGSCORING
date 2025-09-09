@@ -645,7 +645,6 @@ if (isset($_GET['edit'])) {
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">🤸</div>
                     <div class="logo-text">GymnasticsScore</div>
                 </div>
             </div>
@@ -716,7 +715,7 @@ if (isset($_GET['edit'])) {
                 </div>
                 <div class="header-right">
                     <button class="new-event-btn" onclick="showEventForm()">
-                        ➕ New Event
+                        New Event
                     </button>
                 </div>
             </header>
@@ -782,10 +781,10 @@ if (isset($_GET['edit'])) {
 
                         <div class="form-actions" style="margin-top: 15px;">
                             <button type="submit" name="<?php echo $edit_event ? 'update_event' : 'create_event'; ?>" class="btn btn-primary">
-                                <?php echo $edit_event ? '💾 Update Event' : '🏆 Create Event'; ?>
+                                <?php echo $edit_event ? 'Update Event' : 'Create Event'; ?>
                             </button>
                             <button type="button" onclick="hideEventForm()" class="btn btn-secondary">
-                                ❌ Cancel
+                                 Cancel
                             </button>
                         </div>
                     </form>
@@ -841,14 +840,14 @@ if (isset($_GET['edit'])) {
                                     <td>
                                         <div class="action-buttons">
                                             <a href="?edit=<?php echo $event['event_id']; ?>" class="btn btn-secondary btn-small">
-                                                ✏️ Edit
+                                                Edit
                                             </a>
                                             <a href="assign-judges.php?event_id=<?php echo $event['event_id']; ?>" class="btn btn-primary btn-small">
-                                                👨‍⚖️ Judges
+                                                Judges
                                             </a>
                                             <?php if ($event['total_scores'] == 0): ?>
                                                 <button onclick="deleteEvent(<?php echo $event['event_id']; ?>)" class="btn btn-danger btn-small">
-                                                    🗑️ Delete
+                                                    Delete
                                                 </button>
                                             <?php endif; ?>
                                         </div>

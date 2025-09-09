@@ -983,7 +983,6 @@ $total_athletes = array_sum(array_column($organizations, 'total_gymnasts'));
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">🤸</div>
                     <div class="logo-text">GymnasticsScore</div>
                 </div>
             </div>
@@ -1174,7 +1173,7 @@ $total_athletes = array_sum(array_column($organizations, 'total_gymnasts'));
                                                 <td><?php echo $team['gymnast_count']; ?> athletes</td>
                                                 <td>
                                                     <a href="athletes.php?team_id=<?php echo $team['team_id']; ?>" class="btn btn-primary btn-small">
-                                                        👁️ View Athletes
+                                                         View Athletes
                                                     </a>
                                                 </td>
                                             </tr>
@@ -1330,8 +1329,8 @@ $total_athletes = array_sum(array_column($organizations, 'total_gymnasts'));
                             </div>
 
                             <div class="org-actions">
-                                <a href="?view=<?php echo $org['org_id']; ?>" class="btn btn-primary">👁️ View Details</a>
-                                <a href="?edit=<?php echo $org['org_id']; ?>" class="btn btn-warning">✏️ Edit</a>
+                                <a href="?view=<?php echo $org['org_id']; ?>" class="btn btn-primary"> View Details</a>
+                                <a href="?edit=<?php echo $org['org_id']; ?>" class="btn btn-warning"> Edit</a>
                                 <?php if ($org['total_users'] == 0 && $org['total_teams'] == 0): ?>
                                     <button onclick="deleteOrg(<?php echo $org['org_id']; ?>)" class="btn btn-danger">🗑️ Delete</button>
                                 <?php endif; ?>

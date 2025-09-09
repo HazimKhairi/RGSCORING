@@ -151,9 +151,10 @@ if ($selected_event) {
 
         body {
             font-family: 'Poppins', sans-serif;
-            background: #1A1B23;
+            background: #0F0F1A;
             color: white;
             min-height: 100vh;
+            overflow-x: hidden;
         }
 
         .header {
@@ -163,6 +164,7 @@ if ($selected_event) {
             position: sticky;
             top: 0;
             z-index: 1000;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.3);
         }
 
         .header-content {
@@ -171,28 +173,28 @@ if ($selected_event) {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 2rem;
+            padding: 0 1rem;
         }
 
         .logo {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .logo-icon {
-            width: 50px;
-            height: 50px;
+            width: 40px;
+            height: 40px;
             background: linear-gradient(135deg, #8B5CF6, #A855F7);
-            border-radius: 12px;
+            border-radius: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.5rem;
+            font-size: 1.2rem;
         }
 
         .logo-text {
-            font-size: 1.5rem;
+            font-size: 1.2rem;
             font-weight: 700;
             color: white;
         }
@@ -200,7 +202,7 @@ if ($selected_event) {
         .header-actions {
             display: flex;
             align-items: center;
-            gap: 1rem;
+            gap: 0.75rem;
         }
 
         .live-indicator {
@@ -208,47 +210,33 @@ if ($selected_event) {
             align-items: center;
             gap: 0.5rem;
             background: #10B981;
-            padding: 0.75rem 1.5rem;
-            border-radius: 25px;
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
             font-weight: 600;
+            font-size: 0.8rem;
         }
 
         .live-dot {
-            width: 10px;
-            height: 10px;
+            width: 8px;
+            height: 8px;
             background: white;
             border-radius: 50%;
             animation: pulse 2s infinite;
         }
 
-        .login-btn {
-            background: #8B5CF6;
-            color: white;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .login-btn:hover {
-            background: #7C3AED;
-            transform: translateY(-2px);
-        }
-
         .user-info {
             display: flex;
             align-items: center;
-            gap: 0.75rem;
-            padding: 0.5rem 1rem;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
             background: #2D2E3F;
-            border-radius: 10px;
+            border-radius: 8px;
             border: 1px solid #3D3E4F;
         }
 
         .user-avatar {
-            width: 32px;
-            height: 32px;
+            width: 28px;
+            height: 28px;
             background: linear-gradient(135deg, #8B5CF6, #A855F7);
             border-radius: 50%;
             display: flex;
@@ -256,7 +244,7 @@ if ($selected_event) {
             justify-content: center;
             color: white;
             font-weight: 600;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
         }
 
         @keyframes pulse {
@@ -267,7 +255,7 @@ if ($selected_event) {
         .container {
             max-width: 1600px;
             margin: 0 auto;
-            padding: 2rem;
+            padding: 1rem;
         }
 
         .back-btn {
@@ -276,12 +264,13 @@ if ($selected_event) {
             gap: 0.5rem;
             background: #2D2E3F;
             color: white;
-            padding: 0.75rem 1.5rem;
+            padding: 0.75rem 1rem;
             border-radius: 8px;
             text-decoration: none;
             font-weight: 500;
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
             transition: all 0.3s ease;
+            font-size: 0.9rem;
         }
 
         .back-btn:hover {
@@ -290,11 +279,12 @@ if ($selected_event) {
         }
 
         .page-header {
-            margin-bottom: 2rem;
+            margin-bottom: 1.5rem;
+            text-align: center;
         }
 
         .page-title {
-            font-size: 2.5rem;
+            font-size: 2rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
             background: linear-gradient(135deg, #8B5CF6, #A855F7);
@@ -303,52 +293,54 @@ if ($selected_event) {
             background-clip: text;
         }
 
-        .access-level-info {
-            background: rgba(139, 92, 246, 0.1);
-            border: 1px solid rgba(139, 92, 246, 0.3);
-            padding: 1rem;
-            border-radius: 8px;
-            margin-bottom: 1rem;
-            font-size: 0.9rem;
-        }
-
+        /* FIXED FILTERS SECTION */
         .filters-section {
-            background: #2D2E3F;
-            padding: 2rem;
-            border-radius: 16px;
-            margin-bottom: 2rem;
-            border: 1px solid #3D3E4F;
+            background: #1A1B23;
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 1px solid #2D2E3F;
+            position: sticky;
+            top: 80px;
+            z-index: 999;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
         }
 
-        .filters-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 1.5rem;
+        .filters-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.75rem;
+            align-items: center;
+            justify-content: center;
         }
 
         .filter-group {
             display: flex;
             flex-direction: column;
+            min-width: 140px;
+            flex: 1;
+            max-width: 200px;
         }
 
         .filter-group label {
             font-weight: 600;
-            margin-bottom: 0.75rem;
-            color: white;
-            font-size: 0.9rem;
+            margin-bottom: 0.5rem;
+            color: #A3A3A3;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
         .filter-group select {
-            padding: 1rem;
-            border: 2px solid #3D3E4F;
+            padding: 0.75rem;
+            border: 2px solid #2D2E3F;
             border-radius: 8px;
-            font-size: 1rem;
-            background: #1A1B23;
+            font-size: 0.85rem;
+            background: #0F0F1A;
             color: white;
             font-family: 'Poppins', sans-serif;
             transition: all 0.3s ease;
+            cursor: pointer;
         }
 
         .filter-group select:focus {
@@ -357,39 +349,67 @@ if ($selected_event) {
             box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.2);
         }
 
+        /* IMPROVED TABLE CONTAINER */
         .leaderboard-container {
-            background: #2D2E3F;
+            background: #1A1B23;
             border-radius: 16px;
             overflow: hidden;
-            border: 1px solid #3D3E4F;
+            border: 1px solid #2D2E3F;
             margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.3);
         }
 
         .leaderboard-header {
             background: linear-gradient(135deg, #8B5CF6, #A855F7);
-            padding: 2rem;
+            padding: 1.5rem;
             text-align: center;
         }
 
         .leaderboard-title {
-            font-size: 2rem;
+            font-size: 1.5rem;
             font-weight: 700;
             margin-bottom: 0.5rem;
         }
 
         .event-info {
             opacity: 0.9;
-            font-size: 1.1rem;
+            font-size: 0.9rem;
+        }
+
+        /* ENHANCED TABLE WITH FIXED COLUMNS */
+        .table-wrapper {
+            position: relative;
+            overflow: hidden;
         }
 
         .table-container {
             overflow-x: auto;
-            background: #1A1B23;
+            overflow-y: hidden;
+            background: #0F0F1A;
+            position: relative;
+            max-height: 70vh;
+            scrollbar-width: thin;
+            scrollbar-color: #8B5CF6 #2D2E3F;
+        }
+
+        .table-container::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .table-container::-webkit-scrollbar-track {
+            background: #2D2E3F;
+            border-radius: 4px;
+        }
+
+        .table-container::-webkit-scrollbar-thumb {
+            background: #8B5CF6;
+            border-radius: 4px;
         }
 
         .detailed-table {
             width: 100%;
             border-collapse: collapse;
+            position: relative;
         }
 
         .public-view {
@@ -397,47 +417,86 @@ if ($selected_event) {
         }
 
         .detailed-view {
-            min-width: 1400px;
+            min-width: 1200px;
+        }
+
+        /* IMPROVED STICKY COLUMNS */
+        .detailed-table th,
+        .detailed-table td {
+            padding: 0.75rem 0.5rem;
+            text-align: center;
+            border-bottom: 1px solid #2D2E3F;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            white-space: nowrap;
         }
 
         .detailed-table th {
-            background: #2D2E3F;
-            padding: 1rem 0.75rem;
-            text-align: center;
+            background: #1A1B23;
             font-weight: 600;
             color: #A3A3A3;
-            border-bottom: 2px solid #3D3E4F;
-            font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            white-space: nowrap;
-            vertical-align: middle;
+            position: sticky;
+            top: 0;
+            z-index: 20;
         }
 
-        .detailed-table td {
-            padding: 1rem 0.75rem;
-            text-align: center;
-            border-bottom: 1px solid #2D2E3F;
-            font-size: 0.9rem;
-            vertical-align: middle;
+        /* FIXED RANK COLUMN */
+        .detailed-table th:first-child,
+        .detailed-table td:first-child {
+            position: sticky;
+            left: 0;
+            background: #1A1B23;
+            z-index: 30;
+            box-shadow: 2px 0 4px rgba(0,0,0,0.1);
+            border-right: 2px solid #2D2E3F;
+        }
+
+        /* FIXED GYMNAST NAME COLUMN */
+        .detailed-table th:nth-child(2),
+        .detailed-table td:nth-child(2) {
+            position: sticky;
+            left: 60px;
+            background: #1A1B23;
+            z-index: 25;
+            min-width: 120px;
+            text-align: left !important;
+            border-right: 1px solid #2D2E3F;
+        }
+
+        /* FIXED FINAL SCORE COLUMN */
+        .detailed-table th:last-child,
+        .detailed-table td:last-child {
+            position: sticky;
+            right: 0;
+            background: #1A1B23;
+            z-index: 30;
+            box-shadow: -2px 0 4px rgba(0,0,0,0.1);
+            border-left: 2px solid #10B981;
+            min-width: 80px;
         }
 
         .detailed-table tbody tr:hover {
             background: #2D2E3F;
         }
 
+        .detailed-table tbody tr:hover td:first-child,
+        .detailed-table tbody tr:hover td:nth-child(2),
+        .detailed-table tbody tr:hover td:last-child {
+            background: #2D2E3F;
+        }
+
         .section-header {
-            background: #3D3E4F;
+            background: #2D2E3F !important;
             color: #8B5CF6;
             font-weight: 700;
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
+            font-size: 0.7rem;
         }
 
         .rank-cell {
             font-weight: 700;
-            font-size: 1.1rem;
+            font-size: 1rem;
             color: #8B5CF6;
             text-align: center !important;
         }
@@ -446,29 +505,33 @@ if ($selected_event) {
             text-align: left !important;
             font-weight: 600;
             color: white;
+            font-size: 0.85rem;
         }
 
         .club-cell {
             text-align: left !important;
             color: #A3A3A3;
-            font-size: 0.85rem;
+            font-size: 0.75rem;
+            min-width: 100px;
         }
 
         .apparatus-cell {
             font-weight: 600;
             color: #10B981;
             text-align: center !important;
+            min-width: 80px;
         }
 
         .score-cell {
             font-weight: 500;
             color: #F3F4F6;
             text-align: center !important;
+            min-width: 50px;
         }
 
         .total-score-cell {
             font-weight: 600;
-            font-size: 1.05rem;
+            font-size: 0.9rem;
             color: #8B5CF6;
             background: rgba(139, 92, 246, 0.1);
             text-align: center !important;
@@ -476,43 +539,43 @@ if ($selected_event) {
 
         .final-score-cell {
             font-weight: 700;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             color: #10B981;
             background: rgba(16, 185, 129, 0.1);
             text-align: center !important;
         }
 
         .difficulty-section {
-            background: rgba(59, 130, 246, 0.1);
+            background: rgba(59, 130, 246, 0.05) !important;
         }
 
         .artistry-section {
-            background: rgba(245, 158, 11, 0.1);
+            background: rgba(245, 158, 11, 0.05) !important;
         }
 
         .no-data {
             text-align: center;
-            padding: 4rem 2rem;
+            padding: 3rem 1rem;
             color: #A3A3A3;
         }
 
         .no-data h3 {
-            font-size: 1.5rem;
+            font-size: 1.3rem;
             margin-bottom: 1rem;
             color: white;
         }
 
         .refresh-info {
             text-align: center;
-            padding: 1.5rem;
+            padding: 1rem;
             color: #A3A3A3;
-            background: #2D2E3F;
-            border-top: 1px solid #3D3E4F;
-            font-size: 0.9rem;
+            background: #1A1B23;
+            border-top: 1px solid #2D2E3F;
+            font-size: 0.8rem;
         }
 
         .rank-1 { color: #F59E0B; }
-        .rank-2 { color: #6B7280; }
+        .rank-2 { color: #E5E7EB; }
         .rank-3 { color: #CD7C2F; }
 
         .zero-score {
@@ -520,98 +583,194 @@ if ($selected_event) {
             opacity: 0.6;
         }
 
-        /* Responsive Design */
-        @media (max-width: 1200px) {
-            .detailed-table th,
-            .detailed-table td {
-                padding: 0.75rem 0.5rem;
-                font-size: 0.8rem;
-            }
-            
-            .page-title {
-                font-size: 2rem;
-            }
+        /* SCROLL INDICATORS */
+        .scroll-indicator {
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 30px;
+            height: 60px;
+            background: rgba(139, 92, 246, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.2rem;
+            z-index: 50;
+            border-radius: 4px;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+            pointer-events: none;
         }
 
+        .scroll-indicator.left {
+            left: 180px;
+        }
+
+        .scroll-indicator.right {
+            right: 80px;
+        }
+
+        .scroll-indicator.show {
+            opacity: 1;
+        }
+
+        /* MOBILE RESPONSIVE */
         @media (max-width: 768px) {
             .header-content {
-                padding: 0 1rem;
-                flex-direction: column;
-                gap: 1rem;
+                padding: 0 0.75rem;
+            }
+            
+            .logo-text {
+                font-size: 1rem;
+            }
+            
+            .live-indicator {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.7rem;
             }
             
             .container {
-                padding: 1rem;
+                padding: 0.75rem;
             }
             
             .page-title {
-                font-size: 1.8rem;
+                font-size: 1.5rem;
             }
             
-            .filters-grid {
-                grid-template-columns: 1fr;
+            .filters-section {
+                padding: 0.75rem;
+                top: 70px;
             }
             
-            .detailed-table {
-                min-width: 100%;
+            .filters-container {
+                gap: 0.5rem;
+            }
+            
+            .filter-group {
+                min-width: 100px;
+                max-width: 150px;
+            }
+            
+            .filter-group select {
+                padding: 0.6rem;
+                font-size: 0.8rem;
+            }
+            
+            .leaderboard-header {
+                padding: 1rem;
+            }
+            
+            .leaderboard-title {
+                font-size: 1.2rem;
+            }
+            
+            .event-info {
+                font-size: 0.8rem;
             }
             
             .detailed-table th,
             .detailed-table td {
-                padding: 0.5rem 0.25rem;
+                padding: 0.5rem 0.3rem;
                 font-size: 0.75rem;
             }
             
-            .gymnast-cell,
+            .detailed-table th:nth-child(2),
+            .detailed-table td:nth-child(2) {
+                left: 50px;
+                min-width: 100px;
+            }
+            
+            .gymnast-cell {
+                font-size: 0.8rem;
+            }
+            
             .club-cell {
-                min-width: 120px;
+                font-size: 0.7rem;
+                min-width: 80px;
             }
             
-            .leaderboard-header {
-                padding: 1.5rem;
-            }
-            
-            .leaderboard-title {
-                font-size: 1.5rem;
-            }
-            
-            .event-info {
+            .rank-cell {
                 font-size: 0.9rem;
+            }
+            
+            .final-score-cell {
+                font-size: 1rem;
+            }
+            
+            .scroll-indicator.left {
+                left: 150px;
+            }
+            
+            .scroll-indicator.right {
+                right: 60px;
             }
         }
 
         @media (max-width: 480px) {
-            .detailed-table th,
-            .detailed-table td {
-                padding: 0.4rem 0.2rem;
-                font-size: 0.7rem;
+            .header-content {
+                flex-direction: column;
+                gap: 0.5rem;
+                padding: 0.5rem;
             }
             
-            .rank-cell,
-            .final-score-cell {
+            .logo {
+                gap: 0.5rem;
+            }
+            
+            .logo-icon {
+                width: 35px;
+                height: 35px;
+                font-size: 1rem;
+            }
+            
+            .logo-text {
                 font-size: 0.9rem;
             }
             
-            .apparatus-cell {
-                min-width: 80px;
+            .filters-section {
+                top: 90px;
             }
-        }
-
-        /* Improve table alignment */
-        .detailed-table th:first-child,
-        .detailed-table td:first-child {
-            position: sticky;
-            left: 0;
-            background: #2D2E3F;
-            z-index: 10;
-        }
-
-        .detailed-table th:nth-child(2),
-        .detailed-table td:nth-child(2) {
-            position: sticky;
-            left: 50px;
-            background: #2D2E3F;
-            z-index: 10;
+            
+            .filter-group {
+                min-width: 90px;
+                max-width: 120px;
+            }
+            
+            .filter-group label {
+                font-size: 0.7rem;
+            }
+            
+            .filter-group select {
+                padding: 0.5rem;
+                font-size: 0.75rem;
+            }
+            
+            .detailed-table th,
+            .detailed-table td {
+                padding: 0.4rem 0.25rem;
+                font-size: 0.7rem;
+            }
+            
+            .detailed-table th:nth-child(2),
+            .detailed-table td:nth-child(2) {
+                left: 40px;
+                min-width: 90px;
+            }
+            
+            .scroll-indicator {
+                width: 25px;
+                height: 50px;
+                font-size: 1rem;
+            }
+            
+            .scroll-indicator.left {
+                left: 130px;
+            }
+            
+            .scroll-indicator.right {
+                right: 50px;
+            }
         }
     </style>
 </head>
@@ -625,17 +784,16 @@ if ($selected_event) {
             <div class="header-actions">
                 <div class="live-indicator">
                     <div class="live-dot"></div>
-                    LIVE SCORING
+                    LIVE
                 </div>
                 <?php if ($is_logged_in): ?>
                     <div class="user-info">
                         <div class="user-avatar"><?php echo strtoupper(substr($_SESSION['full_name'], 0, 2)); ?></div>
                         <div>
-                            <div style="font-size: 0.8rem; font-weight: 600;"><?php echo htmlspecialchars($_SESSION['full_name']); ?></div>
+                            <div style="font-size: 0.75rem; font-weight: 600;"><?php echo htmlspecialchars($_SESSION['full_name']); ?></div>
                             <div style="font-size: 0.7rem; color: #A3A3A3;"><?php echo ucfirst(str_replace('_', ' ', $_SESSION['role'])); ?></div>
                         </div>
                     </div>
-                <?php else: ?>
                 <?php endif; ?>
             </div>
         </div>
@@ -643,27 +801,26 @@ if ($selected_event) {
 
     <div class="container">
         <?php if (isset($_SESSION['user_id'])): ?>
-            <a href="dashboard.php" class="back-btn">← Back to Dashboard</a>
+            <a href="dashboard.php" class="back-btn">← Dashboard</a>
         <?php else: ?>
-            <a href="index.php" class="back-btn">← Back to Home</a>
+            <a href="index.php" class="back-btn">← Home</a>
         <?php endif; ?>
 
         <div class="page-header">
             <h1 class="page-title">Live Competition Leaderboard</h1>
-           
         </div>
 
         <div class="filters-section">
             <form method="GET" action="">
-                <div class="filters-grid">
+                <div class="filters-container">
                     <div class="filter-group">
-                        <label for="event_id">Select Event:</label>
+                        <label for="event_id">Event</label>
                         <select name="event_id" id="event_id" onchange="this.form.submit()">
-                            <option value="">Choose an event...</option>
+                            <option value="">Select Event...</option>
                             <?php foreach ($events as $event): ?>
                                 <option value="<?php echo $event['event_id']; ?>" 
                                         <?php echo ($selected_event && $selected_event['event_id'] == $event['event_id']) ? 'selected' : ''; ?>>
-                                    <?php echo htmlspecialchars($event['event_name']); ?> - <?php echo $event['event_date']; ?>
+                                    <?php echo htmlspecialchars($event['event_name']); ?>
                                 </option>
                             <?php endforeach; ?>
                         </select>
@@ -671,7 +828,7 @@ if ($selected_event) {
 
                     <?php if ($selected_event): ?>
                     <div class="filter-group">
-                        <label for="category">Filter by Category:</label>
+                        <label for="category">Category</label>
                         <select name="category" id="category" onchange="this.form.submit()">
                             <option value="">All Categories</option>
                             <?php foreach ($categories as $category): ?>
@@ -684,7 +841,7 @@ if ($selected_event) {
                     </div>
 
                     <div class="filter-group">
-                        <label for="apparatus">Filter by Apparatus:</label>
+                        <label for="apparatus">Apparatus</label>
                         <select name="apparatus" id="apparatus" onchange="this.form.submit()">
                             <option value="">All Apparatus</option>
                             <?php foreach ($apparatus_list as $apparatus): ?>
@@ -705,112 +862,117 @@ if ($selected_event) {
             <div class="leaderboard-header">
                 <div class="leaderboard-title"><?php echo htmlspecialchars($selected_event['event_name']); ?></div>
                 <div class="event-info">
-                    <?php echo $selected_event['event_date']; ?> • <?php echo htmlspecialchars($selected_event['location'] ?? 'Location TBA'); ?>
+                    <?php echo $selected_event['event_date']; ?>
                     <?php if ($selected_category): ?>
-                        • Category: <?php echo htmlspecialchars($selected_category); ?>
+                        • <?php echo htmlspecialchars($selected_category); ?>
                     <?php endif; ?>
                 </div>
             </div>
 
             <?php if (!empty($leaderboard_data)): ?>
-            <div class="table-container">
-                <table class="detailed-table <?php echo $is_logged_in ? 'detailed-view' : 'public-view'; ?>">
-                    <thead>
-                        <?php if ($is_logged_in): ?>
-                        <!-- Detailed view for logged in users -->
-                        <tr>
-                            <th rowspan="2">RANK</th>
-                            <th rowspan="2">GYMNAST</th>
-                            <th rowspan="2">CLUB</th>
-                            <th rowspan="2">APPARATUS</th>
-                            <th colspan="7" class="section-header difficulty-section">DIFFICULTY</th>
-                            <th colspan="4" class="section-header artistry-section">ARTISTRY</th>
-                            <th colspan="4" class="section-header artistry-section">EXECUTION</th>
-                            <th rowspan="2" class="section-header">FINAL SCORE</th>
-                        </tr>
-                        <tr>
-                            <!-- Difficulty columns -->
-                            <th class="difficulty-section">D1</th>
-                            <th class="difficulty-section">D2</th>
-                            <th class="difficulty-section">D1-D2</th>
-                            <th class="difficulty-section">D3</th>
-                            <th class="difficulty-section">D4</th>
-                            <th class="difficulty-section">D3-D4</th>
-                            <th class="difficulty-section">Total D</th>
-                            <!-- Artistry columns -->
-                            <th class="artistry-section">A1</th>
-                            <th class="artistry-section">A2</th>
-                            <th class="artistry-section">A3</th>
-                            <th class="artistry-section">Total A</th>
-                            <th class="artistry-section">E1</th>
-                            <th class="artistry-section">E2</th>
-                            <th class="artistry-section">E3</th>
-                            <th class="artistry-section">Total E</th>
-                        </tr>
-                        <?php else: ?>
-                        <!-- Simplified view for public users -->
-                        <tr>
-                            <th>RANK</th>
-                            <th>GYMNAST</th>
-                            <th>CLUB</th>
-                            <th>APPARATUS</th>
-                            <th class="difficulty-section">Total D</th>
-                            <th class="artistry-section">Total A</th>
-                            <th class="artistry-section">Total E</th>
-                            <th class="section-header">FINAL SCORE</th>
-                        </tr>
-                        <?php endif; ?>
-                    </thead>
-                    <tbody>
-                        <?php 
-                        $rank = 1;
-                        foreach ($leaderboard_data as $data): 
-                        ?>
-                        <tr>
-                            <td class="rank-cell rank-<?php echo ($rank <= 3) ? $rank : ''; ?>"><?php echo $rank; ?></td>
-                            <td class="gymnast-cell"><?php echo htmlspecialchars($data['gymnast_name']); ?></td>
-                            <td class="club-cell">
-                                <?php echo htmlspecialchars($data['org_name'] ?? $data['team_name']); ?>
-                                <br><small><?php echo htmlspecialchars($data['gymnast_category']); ?></small>
-                            </td>
-                            <td class="apparatus-cell"><?php echo htmlspecialchars($data['apparatus_name']); ?></td>
-                            
+            <div class="table-wrapper">
+                <div class="scroll-indicator left" id="scrollLeft">←</div>
+                <div class="scroll-indicator right" id="scrollRight">→</div>
+                
+                <div class="table-container" id="tableContainer">
+                    <table class="detailed-table <?php echo $is_logged_in ? 'detailed-view' : 'public-view'; ?>">
+                        <thead>
                             <?php if ($is_logged_in): ?>
-                            <!-- Detailed view columns -->
-                            <!-- Difficulty scores -->
-                            <td class="score-cell <?php echo ($data['score_d1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d1'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_d2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d2'], 2); ?></td>
-                            <td class="score-cell"><?php echo number_format($data['d1_d2_avg'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_d3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d3'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_d4'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d4'], 2); ?></td>
-                            <td class="score-cell"><?php echo number_format($data['d3_d4_avg'], 2); ?></td>
-                            <td class="total-score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
-                            
-                            <!-- Artistry scores -->
-                            <td class="score-cell <?php echo ($data['score_a1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a1'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_a2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a2'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_a3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a3'], 2); ?></td>
-                            <td class="total-score-cell"><?php echo number_format($data['total_a'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_e1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e1'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_e2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e2'], 2); ?></td>
-                            <td class="score-cell <?php echo ($data['score_e3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e3'], 2); ?></td>
-                            <td class="total-score-cell"><?php echo number_format($data['total_e'], 2); ?></td>
+                            <!-- Detailed view for logged in users -->
+                            <tr>
+                                <th rowspan="2">RANK</th>
+                                <th rowspan="2">GYMNAST</th>
+                                <th rowspan="2">CLUB</th>
+                                <th rowspan="2">APPARATUS</th>
+                                <th colspan="7" class="section-header difficulty-section">DIFFICULTY</th>
+                                <th colspan="4" class="section-header artistry-section">ARTISTRY</th>
+                                <th colspan="4" class="section-header artistry-section">EXECUTION</th>
+                                <th rowspan="2" class="section-header">FINAL SCORE</th>
+                            </tr>
+                            <tr>
+                                <!-- Difficulty columns -->
+                                <th class="difficulty-section">D1</th>
+                                <th class="difficulty-section">D2</th>
+                                <th class="difficulty-section">D1-D2</th>
+                                <th class="difficulty-section">D3</th>
+                                <th class="difficulty-section">D4</th>
+                                <th class="difficulty-section">D3-D4</th>
+                                <th class="difficulty-section">Total D</th>
+                                <!-- Artistry columns -->
+                                <th class="artistry-section">A1</th>
+                                <th class="artistry-section">A2</th>
+                                <th class="artistry-section">A3</th>
+                                <th class="artistry-section">Total A</th>
+                                <th class="artistry-section">E1</th>
+                                <th class="artistry-section">E2</th>
+                                <th class="artistry-section">E3</th>
+                                <th class="artistry-section">Total E</th>
+                            </tr>
                             <?php else: ?>
-                            <!-- Public view columns -->
-                            <td class="total-score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
-                            <td class="total-score-cell"><?php echo number_format($data['total_a'], 2); ?></td>
-                            <td class="total-score-cell"><?php echo number_format($data['total_e'], 2); ?></td>
+                            <!-- Simplified view for public users -->
+                            <tr>
+                                <th>RANK</th>
+                                <th>GYMNAST</th>
+                                <th>CLUB</th>
+                                <th>APPARATUS</th>
+                                <th class="difficulty-section">Total D</th>
+                                <th class="artistry-section">Total A</th>
+                                <th class="artistry-section">Total E</th>
+                                <th class="section-header">FINAL SCORE</th>
+                            </tr>
                             <?php endif; ?>
-                            
-                            <!-- Final score -->
-                            <td class="final-score-cell"><?php echo number_format($data['final_score'], 2); ?></td>
-                        </tr>
-                        <?php 
-                        $rank++;
-                        endforeach; 
-                        ?>
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            <?php 
+                            $rank = 1;
+                            foreach ($leaderboard_data as $data): 
+                            ?>
+                            <tr>
+                                <td class="rank-cell rank-<?php echo ($rank <= 3) ? $rank : ''; ?>"><?php echo $rank; ?></td>
+                                <td class="gymnast-cell"><?php echo htmlspecialchars($data['gymnast_name']); ?></td>
+                                <td class="club-cell">
+                                    <?php echo htmlspecialchars($data['org_name'] ?? $data['team_name']); ?>
+                                    <br><small><?php echo htmlspecialchars($data['gymnast_category']); ?></small>
+                                </td>
+                                <td class="apparatus-cell"><?php echo htmlspecialchars($data['apparatus_name']); ?></td>
+                                
+                                <?php if ($is_logged_in): ?>
+                                <!-- Detailed view columns -->
+                                <!-- Difficulty scores -->
+                                <td class="score-cell <?php echo ($data['score_d1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d1'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_d2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d2'], 2); ?></td>
+                                <td class="score-cell"><?php echo number_format($data['d1_d2_avg'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_d3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d3'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_d4'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_d4'], 2); ?></td>
+                                <td class="score-cell"><?php echo number_format($data['d3_d4_avg'], 2); ?></td>
+                                <td class="total-score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
+                                
+                                <!-- Artistry scores -->
+                                <td class="score-cell <?php echo ($data['score_a1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a1'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_a2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a2'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_a3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_a3'], 2); ?></td>
+                                <td class="total-score-cell"><?php echo number_format($data['total_a'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_e1'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e1'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_e2'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e2'], 2); ?></td>
+                                <td class="score-cell <?php echo ($data['score_e3'] == 0) ? 'zero-score' : ''; ?>"><?php echo number_format($data['score_e3'], 2); ?></td>
+                                <td class="total-score-cell"><?php echo number_format($data['total_e'], 2); ?></td>
+                                <?php else: ?>
+                                <!-- Public view columns -->
+                                <td class="total-score-cell"><?php echo number_format($data['total_d'], 2); ?></td>
+                                <td class="total-score-cell"><?php echo number_format($data['total_a'], 2); ?></td>
+                                <td class="total-score-cell"><?php echo number_format($data['total_e'], 2); ?></td>
+                                <?php endif; ?>
+                                
+                                <!-- Final score -->
+                                <td class="final-score-cell"><?php echo number_format($data['final_score'], 2); ?></td>
+                            </tr>
+                            <?php 
+                            $rank++;
+                            endforeach; 
+                            ?>
+                        </tbody>
+                    </table>
+                </div>
             </div>
             <?php else: ?>
             <div class="no-data">
@@ -820,8 +982,7 @@ if ($selected_event) {
             <?php endif; ?>
 
             <div class="refresh-info">
-                📱 Page automatically refreshes every 15 seconds for live updates • Last updated: <?php echo date('H:i:s'); ?>
-            
+                📱 Page refreshes every 15 seconds • Last updated: <?php echo date('H:i:s'); ?>
             </div>
         </div>
         <?php else: ?>
@@ -840,10 +1001,41 @@ if ($selected_event) {
             window.location.reload();
         }, 15000);
 
-        // Smooth scrolling for table on mobile
-        const tableContainer = document.querySelector('.table-container');
+        // Scroll indicators for mobile
+        const tableContainer = document.getElementById('tableContainer');
+        const scrollLeft = document.getElementById('scrollLeft');
+        const scrollRight = document.getElementById('scrollRight');
+
+        function updateScrollIndicators() {
+            if (!tableContainer || !scrollLeft || !scrollRight) return;
+            
+            const { scrollLeft: left, scrollWidth, clientWidth } = tableContainer;
+            const maxScroll = scrollWidth - clientWidth;
+            
+            // Show/hide left indicator
+            if (left > 20) {
+                scrollLeft.classList.add('show');
+            } else {
+                scrollLeft.classList.remove('show');
+            }
+            
+            // Show/hide right indicator
+            if (left < maxScroll - 20) {
+                scrollRight.classList.add('show');
+            } else {
+                scrollRight.classList.remove('show');
+            }
+        }
+
+        // Event listeners for scroll indicators
         if (tableContainer) {
-            tableContainer.style.scrollBehavior = 'smooth';
+            tableContainer.addEventListener('scroll', updateScrollIndicators);
+            window.addEventListener('resize', updateScrollIndicators);
+            window.addEventListener('load', function() {
+                updateScrollIndicators();
+                // Add smooth scrolling
+                tableContainer.style.scrollBehavior = 'smooth';
+            });
         }
 
         // Highlight selected filters
@@ -854,29 +1046,46 @@ if ($selected_event) {
             }
         });
 
-        // Add horizontal scroll indicator for mobile
-        function addScrollIndicator() {
-            const tableContainer = document.querySelector('.table-container');
-            const table = document.querySelector('.detailed-table');
-            
-            if (tableContainer && table && window.innerWidth <= 768) {
-                const canScrollRight = tableContainer.scrollLeft < (table.offsetWidth - tableContainer.offsetWidth);
-                const canScrollLeft = tableContainer.scrollLeft > 0;
-                
-                if (canScrollRight) {
-                    tableContainer.style.boxShadow = 'inset -10px 0 10px -10px rgba(139, 92, 246, 0.3)';
-                } else if (canScrollLeft) {
-                    tableContainer.style.boxShadow = 'inset 10px 0 10px -10px rgba(139, 92, 246, 0.3)';
-                } else {
-                    tableContainer.style.boxShadow = 'none';
-                }
-            }
-        }
+        // Touch gesture for horizontal scrolling on mobile
+        let isDown = false;
+        let startX;
+        let scrollLeftStart;
 
-        // Add scroll event listener
-        document.querySelector('.table-container')?.addEventListener('scroll', addScrollIndicator);
-        window.addEventListener('resize', addScrollIndicator);
-        window.addEventListener('load', addScrollIndicator);
+        if (tableContainer) {
+            tableContainer.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - tableContainer.offsetLeft;
+                scrollLeftStart = tableContainer.scrollLeft;
+            });
+
+            tableContainer.addEventListener('mouseleave', () => {
+                isDown = false;
+            });
+
+            tableContainer.addEventListener('mouseup', () => {
+                isDown = false;
+            });
+
+            tableContainer.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - tableContainer.offsetLeft;
+                const walk = (x - startX) * 2;
+                tableContainer.scrollLeft = scrollLeftStart - walk;
+            });
+
+            // Touch events for mobile
+            tableContainer.addEventListener('touchstart', (e) => {
+                startX = e.touches[0].pageX - tableContainer.offsetLeft;
+                scrollLeftStart = tableContainer.scrollLeft;
+            });
+
+            tableContainer.addEventListener('touchmove', (e) => {
+                const x = e.touches[0].pageX - tableContainer.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                tableContainer.scrollLeft = scrollLeftStart - walk;
+            });
+        }
     </script>
 </body>
 </html>

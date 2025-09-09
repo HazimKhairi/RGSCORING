@@ -833,7 +833,6 @@ $total_categories = count(array_unique(array_column($gymnasts, 'gymnast_category
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">🤸</div>
                     <div class="logo-text">GymnasticsScore</div>
                 </div>
             </div>
@@ -1044,9 +1043,9 @@ $total_categories = count(array_unique(array_column($gymnasts, 'gymnast_category
                                 </div>
 
                                 <div class="item-actions">
-                                    <a href="?edit=<?php echo $gymnast['gymnast_id']; ?>" class="btn btn-warning">✏️ Edit</a>
+                                    <a href="?edit=<?php echo $gymnast['gymnast_id']; ?>" class="btn btn-warning"> Edit</a>
                                     <?php if ($gymnast['total_scores'] == 0): ?>
-                                        <button onclick="deleteAthlete(<?php echo $gymnast['gymnast_id']; ?>)" class="btn btn-danger">🗑️ Delete</button>
+                                        <button onclick="deleteAthlete(<?php echo $gymnast['gymnast_id']; ?>)" class="btn btn-danger">Delete</button>
                                     <?php endif; ?>
                                 </div>
                             </div>
@@ -1085,8 +1084,8 @@ $total_categories = count(array_unique(array_column($gymnasts, 'gymnast_category
                                 </div>
 
                                 <div class="item-actions">
-                                    <a href="#" class="btn btn-primary">👁️ View Athletes</a>
-                                    <a href="#" class="btn btn-warning">✏️ Edit</a>
+                                    <a href="#" class="btn btn-primary"> View Athletes</a>
+                                    <a href="#" class="btn btn-warning"> Edit</a>
                                 </div>
                             </div>
                             <?php endforeach; ?>

@@ -572,7 +572,6 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
             border-radius: 16px;
             border: 1px solid #E2E8F0;
             overflow: hidden;
-            margin-top: 2rem;
         }
 
         .table-container {
@@ -948,57 +947,6 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="alert alert-error">❌ <?php echo htmlspecialchars($error); ?></div>
                 <?php endif; ?>
 
-                <!-- Quick Actions -->
-                <div class="quick-actions-section">
-                    <h2 class="quick-actions-title">Quick Actions</h2>
-                    <div class="quick-actions-grid">
-                        <button class="quick-action-btn" onclick="openModal('createUserModal')">
-                            👤 Create User
-                        </button>
-                        <button class="quick-action-btn" onclick="openModal('createOrgModal')">
-                            🏢 Create Organization
-                        </button>
-                        <a href="events.php" class="quick-action-btn secondary">
-                            🏆 Manage Events
-                        </a>
-                        <a href="../leaderboard.php" class="quick-action-btn secondary">
-                            🏅 View Leaderboard
-                        </a>
-                    </div>
-                </div>
-
-                <!-- System Statistics -->
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon users">👥</div>
-                        </div>
-                        <div class="stat-number"><?php echo array_sum($stats['users_by_role']); ?></div>
-                        <div class="stat-label">Total Users</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon orgs">🏢</div>
-                        </div>
-                        <div class="stat-number"><?php echo $stats['total_organizations']; ?></div>
-                        <div class="stat-label">Organizations</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon events">🏆</div>
-                        </div>
-                        <div class="stat-number"><?php echo array_sum($stats['events_by_status']); ?></div>
-                        <div class="stat-label">Total Events</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-header">
-                            <div class="stat-icon scores">📝</div>
-                        </div>
-                        <div class="stat-number"><?php echo $stats['total_scores']; ?></div>
-                        <div class="stat-label">Scores Given</div>
-                    </div>
-                </div>
-
                 <!-- Users Management -->
                 <div class="users-management-section">
                     <div class="section-header">
@@ -1051,7 +999,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                                                     <input type="hidden" name="is_active" value="<?php echo $user['is_active'] ? '0' : '1'; ?>">
                                                     <button type="submit" name="update_user_status" 
                                                             class="btn <?php echo $user['is_active'] ? 'btn-warning' : 'btn-success'; ?>">
-                                                        <?php echo $user['is_active'] ? '⏸️ Deactivate' : '▶️ Activate'; ?>
+                                                        <?php echo $user['is_active'] ? ' Deactivate' : ' Activate'; ?>
                                                     </button>
                                                 </form>
                                             <?php else: ?>
@@ -1067,7 +1015,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
 
                 <!-- Danger Zone -->
-                <div class="danger-zone">
+                <!-- <div class="danger-zone">
                     <div class="danger-header">
                         <h3 class="danger-title">⚠️ Danger Zone</h3>
                         <p class="danger-subtitle">These actions can affect the entire system. Use with extreme caution.</p>
@@ -1085,7 +1033,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                             </button>
                         </div>
                     </div>
-                </div>
+                </div> -->
             </div>
         </main>
     </div>

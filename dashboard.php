@@ -714,7 +714,6 @@ if (hasRole('admin') && !empty($setup_status)) {
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo">
-                    <div class="logo-icon">🤸</div>
                     <div class="logo-text">GymnasticsScore</div>
                 </div>
             </div>
