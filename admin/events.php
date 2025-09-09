@@ -671,11 +671,6 @@ if (isset($_GET['edit'])) {
                     <div class="nav-text">Athletes Module</div>
                 </a>
 
-                <a href="teams.php" class="nav-item">
-                    <div class="nav-icon">👥</div>
-                    <div class="nav-text">Teams Module</div>
-                </a>
-
                 <a href="organizations.php" class="nav-item">
                     <div class="nav-icon">🏢</div>
                     <div class="nav-text">Organizations</div>
@@ -697,16 +692,6 @@ if (isset($_GET['edit'])) {
                     <div class="nav-text">Administration</div>
                 </a>
                 <?php endif; ?>
-
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">👤</div>
-                    <div class="nav-text">User Management</div>
-                </a>
-
-                <a href="#" class="nav-item">
-                    <div class="nav-icon">⚙️</div>
-                    <div class="nav-text">Settings</div>
-                </a>
             </nav>
 
             <div class="sidebar-footer">

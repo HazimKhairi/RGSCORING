@@ -746,11 +746,6 @@ if (hasRole('admin') && !empty($setup_status)) {
                     <div class="nav-text">Athletes Module</div>
                 </a>
 
-                <a href="admin/teams.php" class="nav-item">
-                    <div class="nav-icon">👥</div>
-                    <div class="nav-text">Teams Module</div>
-                </a>
-
                 <a href="admin/organizations.php" class="nav-item">
                     <div class="nav-icon">🏢</div>
                     <div class="nav-text">Organizations</div>

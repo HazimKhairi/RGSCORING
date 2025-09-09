@@ -258,7 +258,7 @@ try {
 
         .tournament-image {
             width: 100%;
-            height: 200px;
+            height: 100px;
             background: linear-gradient(135deg, #8B5CF6, #A855F7);
             position: relative;
             display: flex;
@@ -357,6 +357,7 @@ try {
         .org-score {
             color: #8B5CF6;
             font-weight: 600;
+            white-space: nowrap;
         }
 
         .tournament-footer {
@@ -386,6 +387,7 @@ try {
             text-decoration: none;
             transition: all 0.3s ease;
             font-size: 0.9rem;
+            white-space: nowrap;
         }
 
         .view-btn:hover {
@@ -608,28 +610,7 @@ try {
         </div>
         <?php endif; ?>
 
-        <!-- System Statistics -->
-        <div class="stats-section">
-            <h2 class="section-title">Platform Statistics</h2>
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-number"><?php echo $stats['total_events']; ?></div>
-                    <div class="stat-label">Active Events</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number"><?php echo $stats['total_orgs']; ?></div>
-                    <div class="stat-label">Organizations</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number"><?php echo $stats['total_athletes']; ?></div>
-                    <div class="stat-label">Athletes</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-number"><?php echo $stats['total_scores']; ?></div>
-                    <div class="stat-label">Total Scores</div>
-                </div>
-            </div>
-        </div>
+      
     </div>
 
     <footer class="footer">

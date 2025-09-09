@@ -733,11 +733,6 @@ if ($event_id) {
                     <div class="nav-text">Athletes Module</div>
                 </a>
 
-                <a href="teams.php" class="nav-item">
-                    <div class="nav-icon">👥</div>
-                    <div class="nav-text">Teams Module</div>
-                </a>
-
                 <a href="organizations.php" class="nav-item">
                     <div class="nav-icon">🏢</div>
                     <div class="nav-text">Organizations</div>

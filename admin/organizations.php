@@ -1009,11 +1009,6 @@ $total_athletes = array_sum(array_column($organizations, 'total_gymnasts'));
                     <div class="nav-text">Athletes Module</div>
                 </a>
 
-                <a href="teams.php" class="nav-item">
-                    <div class="nav-icon">👥</div>
-                    <div class="nav-text">Teams Module</div>
-                </a>
-
                 <a href="organizations.php" class="nav-item active">
                     <div class="nav-icon">🏢</div>
                     <div class="nav-text">Organizations</div>

@@ -443,6 +443,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
             display: grid;
             grid-template-columns: 2fr 1fr;
             gap: 2rem;
+            align-items: start; /* prevent cards from stretching to equal height */
         }
 
         .section-card {
@@ -450,6 +451,7 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
             border-radius: 16px;
             border: 1px solid #E2E8F0;
             overflow: hidden;
+            align-self: start; /* ensure each card sizes to its content */
         }
 
         .section-header {
@@ -488,11 +490,15 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
         }
 
         .role-badge {
+            display: inline-flex;
+            align-items: center;
             padding: 0.25rem 0.75rem;
             border-radius: 15px;
             font-size: 0.75rem;
             font-weight: 600;
             text-transform: uppercase;
+            white-space: nowrap;
+            line-height: 1;
         }
 
         .role-super_admin { background: #EF4444; color: white; }
@@ -604,6 +610,9 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
 
         .status-active { color: #10B981; font-weight: 600; }
         .status-inactive { color: #EF4444; font-weight: 600; }
+
+        /* Ensure activity numbers with labels stay on one line */
+        .activity-item { white-space: nowrap; display: inline-flex; align-items: baseline; }
 
         .user-actions {
             display: flex;
@@ -884,11 +893,6 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div class="nav-text">Athletes Module</div>
                 </a>
 
-                <a href="teams.php" class="nav-item">
-                    <div class="nav-icon">👥</div>
-                    <div class="nav-text">Teams Module</div>
-                </a>
-
                 <a href="organizations.php" class="nav-item">
                     <div class="nav-icon">🏢</div>
                     <div class="nav-text">Organizations</div>
@@ -1083,12 +1087,12 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                                     <td><?php echo htmlspecialchars($user['org_name'] ?? 'None'); ?></td>
                                     <td>
                                         <span class="status-<?php echo $user['is_active'] ? 'active' : 'inactive'; ?>">
-                                            <?php echo $user['is_active'] ? '✅ Active' : '❌ Inactive'; ?>
+                                            <?php echo $user['is_active'] ? 'Active' : '❌ Inactive'; ?>
                                         </span>
                                     </td>
                                     <td>
                                         <?php if ($user['role'] == 'judge'): ?>
-                                            <small><?php echo $user['assignments']; ?> assignments<br><?php echo $user['scores_given']; ?> scores</small>
+                                            <small><span class="activity-item"><?php echo $user['assignments']; ?> assignments</span><br><span class="activity-item"><?php echo $user['scores_given']; ?> scores</span></small>
                                         <?php else: ?>
                                             -
                                         <?php endif; ?>

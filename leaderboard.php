@@ -344,6 +344,7 @@ if ($selected_event) {
             font-size: 0.85rem;
             text-transform: uppercase;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
 
         .detailed-table td {
