@@ -999,60 +999,6 @@ $recent_activity = $activity_stmt->fetchAll(PDO::FETCH_ASSOC);
                     </div>
                 </div>
 
-                <!-- Dashboard Sections -->
-                <div class="dashboard-sections">
-                    <!-- User Distribution -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h2 class="section-title">User Distribution by Role</h2>
-                        </div>
-                        <div class="section-content">
-                            <div class="roles-grid">
-                                <?php foreach ($stats['users_by_role'] as $role => $count): ?>
-                                <div class="role-item">
-                                    <div>
-                                        <span class="role-badge role-<?php echo $role; ?>">
-                                            <?php echo ucfirst(str_replace('_', ' ', $role)); ?>
-                                        </span>
-                                    </div>
-                                    <div class="role-count"><?php echo $count; ?></div>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Recent Activity -->
-                    <div class="section-card">
-                        <div class="section-header">
-                            <h2 class="section-title">Recent System Activity</h2>
-                        </div>
-                        <div class="section-content">
-                            <div class="activity-list">
-                                <?php foreach ($recent_activity as $activity): ?>
-                                <div class="activity-item">
-                                    <div class="activity-icon">
-                                        <?php echo $activity['type'] == 'Score' ? '📝' : '🏆'; ?>
-                                    </div>
-                                    <div class="activity-content">
-                                        <div class="activity-title"><?php echo $activity['type']; ?> Activity</div>
-                                        <div class="activity-details">
-                                            <strong><?php echo htmlspecialchars($activity['user_name']); ?></strong>
-                                        </div>
-                                        <div class="activity-details">
-                                            <?php echo htmlspecialchars($activity['details']); ?>
-                                        </div>
-                                        <div class="activity-time">
-                                            <?php echo date('M d, H:i', strtotime($activity['created_at'])); ?>
-                                        </div>
-                                    </div>
-                                </div>
-                                <?php endforeach; ?>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- Users Management -->
                 <div class="users-management-section">
                     <div class="section-header">
